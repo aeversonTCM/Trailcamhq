@@ -2243,8 +2243,8 @@ async function prefetchSunData() {
         }
     }
     
-    // Only fetch dates not already in cache
-    const datesToFetch = Array.from(uniqueDates).filter(d => !sunData[d]).slice(0, 60);
+    // Only fetch dates not already in cache - limit to 20 per session to avoid rate limits
+    const datesToFetch = Array.from(uniqueDates).filter(d => !sunData[d]).slice(0, 20);
     
     if (datesToFetch.length === 0) {
         console.log('All sun data already cached');
@@ -2252,17 +2252,18 @@ async function prefetchSunData() {
     }
     
     console.log(`Fetching sun data for ${datesToFetch.length} dates...`);
-    let count = 0;
     const newSunData = {};
     
     for (const dateStr of datesToFetch) {
-        count++;
         await getSunData(dateStr);
         
         // Track newly fetched data for cache sync
         if (sunData[dateStr]) {
             newSunData[dateStr] = sunData[dateStr];
         }
+        
+        // Small delay to avoid rate limits (200ms between calls)
+        await new Promise(r => setTimeout(r, 200));
     }
     
     console.log('Pre-fetched sun data for', datesToFetch.length, 'dates');
@@ -2373,6 +2374,14 @@ async function getSunData(dateStr) {
     try {
         const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${CONFIG.fixedLat},${CONFIG.fixedLng}/${dateStr}?unitGroup=us&key=${CONFIG.visualCrossingApiKey}&include=days&elements=datetime,sunrise,sunset,moonphase`;
         const response = await fetch(url);
+        
+        // Handle rate limit - use calculated values instead
+        if (response.status === 429) {
+            console.warn('Visual Crossing rate limit hit, using calculated values for', dateStr);
+            sunData[dateStr] = { sunrise: timeToMs('07:00:00'), sunset: timeToMs('18:00:00'), moonphase: calculateMoonPhase(dateStr) };
+            return sunData[dateStr];
+        }
+        
         const data = await response.json();
         
         if (data.days && data.days[0]) {
@@ -2444,11 +2453,12 @@ async function processPhotosForChart() {
     console.log('Unique dates:', uniqueDates.size);
     
     // Sun data already prefetched at login, just ensure any missing dates are fetched
-    const datesToFetch = Array.from(uniqueDates).filter(d => !sunData[d]).slice(0, 60);
+    const datesToFetch = Array.from(uniqueDates).filter(d => !sunData[d]).slice(0, 20);
     if (datesToFetch.length > 0) {
         console.log(`Fetching ${datesToFetch.length} missing sun dates...`);
         for (const dateStr of datesToFetch) {
             await getSunData(dateStr);
+            await new Promise(r => setTimeout(r, 200)); // Rate limit delay
         }
     }
     
