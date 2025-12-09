@@ -1289,85 +1289,67 @@ async function initializeApp() {
     // - Viewer with own login: skip cache (their data is different)
     const useCache = accessLevel === 'admin' || savedEmail === 'QuickView';
     
-    if (useCache) {
-        // STAGED LOADING: Get first 50 photos instantly, load rest in background
-        showLoading('Loading...');
+    // Try loading from cache first
+    const cachedData = useCache ? await loadFromCache() : null;
+    
+    if (cachedData && cachedData.photos && cachedData.photos.length > 0) {
+        // Use cached data
+        showLoading('Loading photos...');
         
-        try {
-            // Step 1: Load first 50 photos for instant display
-            const response = await fetch(`${CONFIG.googleSheetsUrl}?action=getRecent&limit=50`);
-            const recentData = await response.json();
-            
-            if (recentData && recentData.photos && recentData.photos.length > 0) {
-                // Load tags
-                if (recentData.tags) {
-                    recentData.tags.forEach(tag => {
-                        tagsLookup[tag.name] = tag.tagId;
-                        tagIdToName[tag.tagId] = tag.name;
-                    });
-                    populateTagFilter();
-                }
-                
-                // Load galleries
-                if (recentData.galleries) {
-                    recentData.galleries.forEach(g => {
-                        groupsLookup[g.photoGroupId] = g.name;
-                    });
-                    galleries = recentData.galleries;
-                    populateGalleryFilter();
-                }
-                
-                // Load sun/moon data
-                if (recentData.sunData) sunData = recentData.sunData;
-                if (recentData.moonData) moonData = recentData.moonData;
-                
-                // Display first 50 photos immediately
-                allPhotos = recentData.photos;
-                recentData.photos.forEach(p => {
-                    if (p.cameraName) cameras.add(p.cameraName);
-                });
-                populateCameraFilter();
-                filteredPhotos = [...allPhotos];
-                applyFilters();
-                hideLoading();
-                
-                console.log(`Displayed ${allPhotos.length} photos instantly`);
-                
-                // Step 2: Load remaining photos in background if there are more
-                if (recentData.totalPhotos > allPhotos.length) {
-                    showSyncStatus(`Loading ${recentData.totalPhotos - allPhotos.length} more photos...`, 'syncing');
-                    
-                    const fullResponse = await fetch(`${CONFIG.googleSheetsUrl}?action=getAll`);
-                    const fullData = await fullResponse.json();
-                    
-                    if (fullData && fullData.photos) {
-                        allPhotos = fullData.photos;
-                        fullData.photos.forEach(p => {
-                            if (p.cameraName) cameras.add(p.cameraName);
-                        });
-                        populateCameraFilter();
-                        filteredPhotos = [...allPhotos];
-                        // Don't call applyFilters to avoid resetting view, just update count
-                        updatePhotoCount();
-                        
-                        showSyncStatus(`Loaded all ${allPhotos.length} photos`, 'complete');
-                        setTimeout(() => hideSyncStatus(), 3000);
-                        console.log(`Loaded remaining photos, total: ${allPhotos.length}`);
-                    }
-                }
-            } else {
-                // No cached data - fall through to API loading
-                await loadFromAPI();
-            }
-        } catch (error) {
-            console.error('Cache load error:', error);
-            hideLoading();
-            await loadFromAPI();
+        // Load tags
+        if (cachedData.tags) {
+            cachedData.tags.forEach(tag => {
+                tagsLookup[tag.name] = tag.tagId;
+                tagIdToName[tag.tagId] = tag.name;
+            });
+            populateTagFilter();
         }
+        
+        // Load galleries
+        if (cachedData.galleries) {
+            cachedData.galleries.forEach(g => {
+                groupsLookup[g.photoGroupId] = g.name;
+            });
+            galleries = cachedData.galleries;
+            populateGalleryFilter();
+        }
+        
+        // Load sun/moon data
+        if (cachedData.sunData) sunData = cachedData.sunData;
+        if (cachedData.moonData) moonData = cachedData.moonData;
+        
+        // Load photos
+        allPhotos = cachedData.photos;
+        cachedData.photos.forEach(p => {
+            if (p.cameraName) cameras.add(p.cameraName);
+        });
+        populateCameraFilter();
+        filteredPhotos = [...allPhotos];
+        applyFilters();
+        
+        console.log(`Loaded ${allPhotos.length} photos from cache`);
     } else {
         // No cache - load everything from Reveal API
         await loadFromAPI();
     }
+    
+    // Apply access level restrictions
+    applyAccessLevel();
+    
+    // Hide loading - photos are visible now
+    hideLoading();
+    
+    // Pre-fetch sun/forecast data in background (needed for dashboard)
+    (async () => {
+        try {
+            await prefetchSunData();
+            await processPhotosForPrediction();
+            await prefetchForecast();
+            console.log('Sun/forecast data ready');
+        } catch (e) {
+            console.error('Prefetch error:', e);
+        }
+    })();
     
     // Dashboard tab listener
     document.getElementById('dashboard-tab').addEventListener('shown.bs.tab', () => {
@@ -1375,23 +1357,6 @@ async function initializeApp() {
             initializeDashboard();
         }
     });
-    
-    // Apply access level restrictions
-    applyAccessLevel();
-    
-    hideLoading();
-    
-    // Pre-fetch sun/forecast data in BACKGROUND (don't block UI)
-    (async () => {
-        try {
-            await prefetchSunData();
-            await processPhotosForPrediction();
-            await prefetchForecast();
-            console.log('Background sun/forecast data loaded');
-        } catch (e) {
-            console.error('Background prefetch error:', e);
-        }
-    })();
 }
 
 async function backgroundSyncWithReveal() {
@@ -2311,8 +2276,6 @@ async function prefetchSunData() {
 }
 
 async function processPhotosForPrediction() {
-    showLoading('Processing photos for prediction...');
-    
     // Build dashboardPhotos array for prediction calculations
     dashboardPhotos = [];
     
@@ -2357,8 +2320,6 @@ async function processPhotosForPrediction() {
 }
 
 async function prefetchForecast() {
-    showLoading('Fetching forecast data...');
-    
     try {
         const lat = CONFIG.fixedLat;
         const lng = CONFIG.fixedLng;
