@@ -2233,8 +2233,6 @@ function getMoonSymbol(phase) {
 }
 
 async function prefetchSunData() {
-    showLoading('Fetching astronomical data...');
-    
     // Collect unique dates from photos
     const uniqueDates = new Set();
     for (const photo of allPhotos) {
@@ -2253,12 +2251,12 @@ async function prefetchSunData() {
         return;
     }
     
+    console.log(`Fetching sun data for ${datesToFetch.length} dates...`);
     let count = 0;
     const newSunData = {};
     
     for (const dateStr of datesToFetch) {
         count++;
-        showLoading(`Fetching sun data (${count}/${datesToFetch.length})...`);
         await getSunData(dateStr);
         
         // Track newly fetched data for cache sync
@@ -2448,10 +2446,8 @@ async function processPhotosForChart() {
     // Sun data already prefetched at login, just ensure any missing dates are fetched
     const datesToFetch = Array.from(uniqueDates).filter(d => !sunData[d]).slice(0, 60);
     if (datesToFetch.length > 0) {
-        let count = 0;
+        console.log(`Fetching ${datesToFetch.length} missing sun dates...`);
         for (const dateStr of datesToFetch) {
-            count++;
-            showLoading(`Fetching sun data (${count}/${datesToFetch.length})...`);
             await getSunData(dateStr);
         }
     }
