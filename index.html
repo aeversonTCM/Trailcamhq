@@ -1076,8 +1076,9 @@ async function initializeApp() {
         
         console.log(`Loaded ${allPhotos.length} photos from cache`);
         
-        // Background sync with Reveal API for new photos
-        backgroundSyncWithReveal();
+        // Skip background sync from GitHub Pages (CORS blocked)
+        // User can click "Refresh" to sync manually
+        console.log('Using cached data. Click Refresh to sync with Reveal.');
     } else {
         // No cache - load everything from Reveal API
         await loadTags();
@@ -1344,34 +1345,47 @@ function populateCameraFilter() {
 
 async function refreshPhotos() {
     showLoading('Checking for new photos...');
-    const existingIds = new Set(allPhotos.map(p => p.photoId));
-    let newCount = 0, page = 0;
     
-    while (true) {
-        const response = await fetch(
-            `${CONFIG.apiBaseUrl}/photos?size=100&page=${page}&includeWeatherData=true`,
-            { headers: { 'Authorization': `Bearer ${accessToken}` } }
-        );
-        const data = await response.json();
-        if (!data.response || !data.response.photos || data.response.photos.length === 0) break;
+    try {
+        const existingIds = new Set(allPhotos.map(p => p.photoId));
+        let newPhotos = [];
+        let page = 0;
         
-        let foundExisting = false;
-        for (const photo of data.response.photos) {
-            if (existingIds.has(photo.photoId)) { foundExisting = true; continue; }
-            if (!photo.photoDateUtc && !photo.photoDate) continue;
-            if (photo.cameraName) cameras.add(photo.cameraName);
-            allPhotos.unshift(photo);
-            newCount++;
+        while (true) {
+            const response = await fetch(
+                `${CONFIG.apiBaseUrl}/photos?size=100&page=${page}&includeWeatherData=true`,
+                { headers: { 'Authorization': `Bearer ${accessToken}` } }
+            );
+            const data = await response.json();
+            if (!data.response || !data.response.photos || data.response.photos.length === 0) break;
+            
+            let foundExisting = false;
+            for (const photo of data.response.photos) {
+                if (existingIds.has(photo.photoId)) { foundExisting = true; continue; }
+                if (!photo.photoDateUtc && !photo.photoDate) continue;
+                if (photo.cameraName) cameras.add(photo.cameraName);
+                allPhotos.unshift(photo);
+                newPhotos.push(photo);
+            }
+            if (foundExisting) break;
+            page++;
         }
-        if (foundExisting) break;
-        page++;
+        
+        await loadGalleries();
+        applyFilters();
+        
+        // Sync new photos to cache
+        if (newPhotos.length > 0) {
+            await syncPhotosToCache(newPhotos);
+        }
+        
+        hideLoading();
+        console.log(newPhotos.length > 0 ? `Added ${newPhotos.length} new photos` : 'No new photos');
+    } catch (error) {
+        hideLoading();
+        console.error('Refresh error:', error);
+        alert('Could not connect to Reveal API. Try using the local batch file to sync new photos.');
     }
-    
-    await loadGalleries();
-    applyFilters();
-    
-    hideLoading();
-    console.log(newCount > 0 ? `Added ${newCount} new photos` : 'No new photos');
 }
 
 // ============== FILTERS ==============
