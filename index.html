@@ -338,6 +338,37 @@
             color: var(--text-primary);
             font-weight: 500;
         }
+        
+        /* Sync Status Bar */
+        #syncStatus {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 13px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        #syncStatus.syncing {
+            border-color: var(--accent-blue);
+        }
+        
+        #syncStatus.complete {
+            border-color: var(--accent-green);
+        }
+        
+        #syncStatus.error {
+            border-color: var(--accent-red);
+        }
+        
+        #syncStatus i {
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -348,6 +379,12 @@
         <span class="visually-hidden">Loading...</span>
     </div>
     <p class="mt-3" id="loadingText">Loading...</p>
+</div>
+
+<!-- Sync Status Bar -->
+<div id="syncStatus">
+    <i class="bi bi-cloud-upload"></i>
+    <span id="syncStatusText">Syncing...</span>
 </div>
 
 <!-- Navbar -->
@@ -947,7 +984,7 @@ async function viewOnlyLogin() {
         if (authData.AuthenticationResult) {
             accessToken = authData.AuthenticationResult.AccessToken;
             localStorage.setItem('trailcam_token', accessToken);
-            localStorage.setItem('trailcam_email', 'Viewer');
+            localStorage.setItem('trailcam_email', 'QuickView');
             await initializeApp();
             
             // Auto-refresh to get new photos after cache loads
@@ -1019,6 +1056,37 @@ function showLoading(msg = 'Loading...') {
 
 function hideLoading() {
     document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function showSyncStatus(msg, status = 'syncing') {
+    const el = document.getElementById('syncStatus');
+    const textEl = document.getElementById('syncStatusText');
+    const icons = {
+        syncing: 'bi-cloud-upload',
+        complete: 'bi-check-circle-fill',
+        error: 'bi-exclamation-triangle-fill'
+    };
+    el.className = status;
+    el.querySelector('i').className = 'bi ' + (icons[status] || icons.syncing);
+    textEl.textContent = msg;
+    el.style.display = 'block';
+}
+
+function hideSyncStatus() {
+    document.getElementById('syncStatus').style.display = 'none';
+}
+
+async function loadFromAPI() {
+    await loadTags();
+    await loadPhotoGroups();
+    await loadGalleries();
+    await loadPhotos();
+}
+
+function updatePhotoCount() {
+    // Update the photo counter without resetting the current view
+    document.getElementById('currentPosition').textContent = filteredPhotos.length > 0 ? currentIndex + 1 : 0;
+    document.getElementById('totalCount').textContent = filteredPhotos.length;
 }
 
 // ============== AUTH ==============
@@ -1202,7 +1270,8 @@ async function syncMoonDataToCache(moonDataToSync) {
 
 async function initializeApp() {
     const savedEmail = localStorage.getItem('trailcam_email');
-    document.getElementById('userName').textContent = savedEmail || 'User';
+    const displayName = savedEmail === 'QuickView' ? 'Quick View' : (savedEmail || 'User');
+    document.getElementById('userName').textContent = displayName;
     document.getElementById('userDisplay').style.display = 'inline';
     document.getElementById('logoutBtn').style.display = 'inline-block';
     document.getElementById('loginSection').style.display = 'none';
@@ -1215,68 +1284,89 @@ async function initializeApp() {
     bulkDeleteModalInstance = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
     
     // Decide whether to use cache:
-    // - Admin: always use cache
-    // - Viewer using Quick View (email='Viewer'): use cache
-    // - Viewer with own login: skip cache, load fresh from their account
-    const useCache = accessLevel === 'admin' || savedEmail === 'Viewer';
+    // - Admin: use cache
+    // - QuickView: use cache (same account, same data)
+    // - Viewer with own login: skip cache (their data is different)
+    const useCache = accessLevel === 'admin' || savedEmail === 'QuickView';
     
-    // Try loading from cache first for instant display
-    const cachedData = useCache ? await loadFromCache() : null;
-    
-    if (cachedData && cachedData.photos && cachedData.photos.length > 0) {
-        // Use cached data for instant display
-        showLoading('Loading cached data...');
+    if (useCache) {
+        // STAGED LOADING: Get first 50 photos instantly, load rest in background
+        showLoading('Loading...');
         
-        // Load cached tags
-        if (cachedData.tags) {
-            cachedData.tags.forEach(tag => {
-                tagsLookup[tag.name] = tag.tagId;
-                tagIdToName[tag.tagId] = tag.name;
-            });
-            populateTagFilter();
+        try {
+            // Step 1: Load first 50 photos for instant display
+            const response = await fetch(`${CONFIG.googleSheetsUrl}?action=getRecent&limit=50`);
+            const recentData = await response.json();
+            
+            if (recentData && recentData.photos && recentData.photos.length > 0) {
+                // Load tags
+                if (recentData.tags) {
+                    recentData.tags.forEach(tag => {
+                        tagsLookup[tag.name] = tag.tagId;
+                        tagIdToName[tag.tagId] = tag.name;
+                    });
+                    populateTagFilter();
+                }
+                
+                // Load galleries
+                if (recentData.galleries) {
+                    recentData.galleries.forEach(g => {
+                        groupsLookup[g.photoGroupId] = g.name;
+                    });
+                    galleries = recentData.galleries;
+                    populateGalleryFilter();
+                }
+                
+                // Load sun/moon data
+                if (recentData.sunData) sunData = recentData.sunData;
+                if (recentData.moonData) moonData = recentData.moonData;
+                
+                // Display first 50 photos immediately
+                allPhotos = recentData.photos;
+                recentData.photos.forEach(p => {
+                    if (p.cameraName) cameras.add(p.cameraName);
+                });
+                populateCameraFilter();
+                filteredPhotos = [...allPhotos];
+                applyFilters();
+                hideLoading();
+                
+                console.log(`Displayed ${allPhotos.length} photos instantly`);
+                
+                // Step 2: Load remaining photos in background if there are more
+                if (recentData.totalPhotos > allPhotos.length) {
+                    showSyncStatus(`Loading ${recentData.totalPhotos - allPhotos.length} more photos...`, 'syncing');
+                    
+                    const fullResponse = await fetch(`${CONFIG.googleSheetsUrl}?action=getAll`);
+                    const fullData = await fullResponse.json();
+                    
+                    if (fullData && fullData.photos) {
+                        allPhotos = fullData.photos;
+                        fullData.photos.forEach(p => {
+                            if (p.cameraName) cameras.add(p.cameraName);
+                        });
+                        populateCameraFilter();
+                        filteredPhotos = [...allPhotos];
+                        // Don't call applyFilters to avoid resetting view, just update count
+                        updatePhotoCount();
+                        
+                        showSyncStatus(`Loaded all ${allPhotos.length} photos`, 'complete');
+                        setTimeout(() => hideSyncStatus(), 3000);
+                        console.log(`Loaded remaining photos, total: ${allPhotos.length}`);
+                    }
+                }
+            } else {
+                // No cached data - fall through to API loading
+                await loadFromAPI();
+            }
+        } catch (error) {
+            console.error('Cache load error:', error);
+            hideLoading();
+            await loadFromAPI();
         }
-        
-        // Load cached galleries
-        if (cachedData.galleries) {
-            cachedData.galleries.forEach(g => {
-                groupsLookup[g.photoGroupId] = g.name;
-            });
-            galleries = cachedData.galleries;
-            populateGalleryFilter();
-        }
-        
-        // Load cached sun data
-        if (cachedData.sunData && Object.keys(cachedData.sunData).length > 0) {
-            sunData = cachedData.sunData;
-            console.log(`Loaded ${Object.keys(sunData).length} sun data entries from cache`);
-        }
-        
-        // Load cached moon data (for future use)
-        if (cachedData.moonData && Object.keys(cachedData.moonData).length > 0) {
-            moonData = cachedData.moonData;
-            console.log(`Loaded ${Object.keys(moonData).length} moon data entries from cache`);
-        }
-        
-        // Load cached photos
-        allPhotos = cachedData.photos;
-        cachedData.photos.forEach(p => {
-            if (p.cameraName) cameras.add(p.cameraName);
-        });
-        populateCameraFilter();
-        filteredPhotos = [...allPhotos];
-        applyFilters();
-        
-        console.log(`Loaded ${allPhotos.length} photos from cache`);
-        
-        // Skip background sync from GitHub Pages (CORS blocked)
-        // User can click "Refresh" to sync manually
-        console.log('Using cached data. Click Refresh to sync with Reveal.');
     } else {
         // No cache - load everything from Reveal API
-        await loadTags();
-        await loadPhotoGroups();
-        await loadGalleries();
-        await loadPhotos();
+        await loadFromAPI();
     }
     
     // Pre-fetch sun data for dashboard
@@ -1477,6 +1567,10 @@ async function loadPhotos() {
             `${CONFIG.apiBaseUrl}/photos?size=100&page=${page}&includeWeatherData=true`,
             { headers: { 'Authorization': `Bearer ${accessToken}` } }
         );
+        
+        // API returns 400 when page is out of range - that's our signal to stop
+        if (!response.ok) break;
+        
         const data = await response.json();
         
         if (!data.response || !data.response.photos || data.response.photos.length === 0) break;
@@ -1504,30 +1598,34 @@ async function loadPhotos() {
     }
     
     applyFilters();
-    
-    // Sync all data to cache (in background)
-    if (isCacheEnabled()) {
-        showLoading('Syncing to cache...');
-        
-        // Sync tags
-        const tags = Object.entries(tagsLookup).map(([name, tagId]) => ({ tagId, name }));
-        await syncTagsToCache(tags);
-        
-        // Sync galleries
-        await syncGalleriesToCache(galleries);
-        
-        // Sync photos in batches
-        const batchSize = 200;
-        for (let i = 0; i < allPhotos.length; i += batchSize) {
-            showLoading(`Syncing photos to cache (${Math.min(i + batchSize, allPhotos.length)}/${allPhotos.length})...`);
-            const batch = allPhotos.slice(i, i + batchSize);
-            await syncPhotosToCache(batch);
-        }
-        
-        console.log('Cache sync complete');
-    }
-    
     hideLoading();
+    
+    // Sync all data to cache in BACKGROUND (don't block UI)
+    if (isCacheEnabled() && accessLevel === 'admin') {
+        showSyncStatus('Syncing to cache...', 'syncing');
+        
+        // Fire and forget - don't await
+        (async () => {
+            try {
+                // Sync tags & galleries
+                const tags = Object.entries(tagsLookup).map(([name, tagId]) => ({ tagId, name }));
+                await syncTagsToCache(tags);
+                await syncGalleriesToCache(galleries);
+                
+                showSyncStatus(`Syncing ${allPhotos.length} photos...`, 'syncing');
+                
+                // Sync ALL photos in one request
+                await syncPhotosToCache(allPhotos);
+                
+                showSyncStatus('Cache sync complete!', 'complete');
+                setTimeout(() => hideSyncStatus(), 3000);
+            } catch (e) {
+                console.error('Background cache sync error:', e);
+                showSyncStatus('Sync error', 'error');
+                setTimeout(() => hideSyncStatus(), 5000);
+            }
+        })();
+    }
 }
 
 function populateCameraFilter() {
@@ -1568,13 +1666,20 @@ async function refreshPhotos() {
         
         await loadGalleries();
         applyFilters();
+        hideLoading();
         
-        // Sync new photos to cache
+        // Sync new photos to cache in background
         if (newPhotos.length > 0) {
-            await syncPhotosToCache(newPhotos);
+            showSyncStatus(`Syncing ${newPhotos.length} new photos...`, 'syncing');
+            syncPhotosToCache(newPhotos).then(() => {
+                showSyncStatus(`${newPhotos.length} new photos synced!`, 'complete');
+                setTimeout(() => hideSyncStatus(), 3000);
+            }).catch(() => {
+                showSyncStatus('Sync error', 'error');
+                setTimeout(() => hideSyncStatus(), 5000);
+            });
         }
         
-        hideLoading();
         console.log(newPhotos.length > 0 ? `Added ${newPhotos.length} new photos` : 'No new photos');
     } catch (error) {
         hideLoading();
