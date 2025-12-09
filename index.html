@@ -1369,15 +1369,6 @@ async function initializeApp() {
         await loadFromAPI();
     }
     
-    // Pre-fetch sun data for dashboard
-    await prefetchSunData();
-    
-    // Process photos for dashboard (needed for prediction chart)
-    await processPhotosForPrediction();
-    
-    // Pre-fetch forecast data (will also create prediction chart)
-    await prefetchForecast();
-    
     // Dashboard tab listener
     document.getElementById('dashboard-tab').addEventListener('shown.bs.tab', () => {
         if (!dashboardInitialized) {
@@ -1389,6 +1380,18 @@ async function initializeApp() {
     applyAccessLevel();
     
     hideLoading();
+    
+    // Pre-fetch sun/forecast data in BACKGROUND (don't block UI)
+    (async () => {
+        try {
+            await prefetchSunData();
+            await processPhotosForPrediction();
+            await prefetchForecast();
+            console.log('Background sun/forecast data loaded');
+        } catch (e) {
+            console.error('Background prefetch error:', e);
+        }
+    })();
 }
 
 async function backgroundSyncWithReveal() {
