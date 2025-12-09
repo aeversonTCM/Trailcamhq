@@ -415,17 +415,21 @@
             
             <!-- View Only Button (shown for viewers) -->
             <div id="viewOnlySection" style="display: none;">
-                <div class="d-grid gap-2">
+                <div class="d-grid gap-2 mb-3">
                     <button class="btn btn-success btn-lg" onclick="viewOnlyLogin()">
-                        <i class="bi bi-eye-fill me-2"></i>Enter View Only Mode
+                        <i class="bi bi-eye-fill me-2"></i>Quick View Mode
                     </button>
                 </div>
-                <div class="text-center mt-3">
-                    <small class="text-muted">Browse photos and view the dashboard</small>
+                <div class="text-center mb-3">
+                    <small class="text-muted">Browse photos instantly without signing in</small>
+                </div>
+                <hr>
+                <div class="text-center mb-2">
+                    <small class="text-muted">Or sign in with your own Tactacam account</small>
                 </div>
             </div>
             
-            <!-- Admin Login Form (shown for admins) -->
+            <!-- Login Form (shown for all) -->
             <div id="adminLoginSection">
                 <div class="mb-3">
                     <label class="form-label">Email</label>
@@ -900,11 +904,11 @@ function applyAccessLevel() {
         el.style.display = accessLevel === 'admin' ? '' : 'none';
     });
     
-    // Show appropriate login section
+    // Show appropriate login options
     if (accessLevel === 'viewer') {
         document.getElementById('viewOnlySection').style.display = 'block';
-        document.getElementById('adminLoginSection').style.display = 'none';
-        document.getElementById('loginSubtitle').textContent = 'Click below to view photos';
+        document.getElementById('adminLoginSection').style.display = 'block';
+        document.getElementById('loginSubtitle').textContent = 'Choose how to access';
     } else {
         document.getElementById('viewOnlySection').style.display = 'none';
         document.getElementById('adminLoginSection').style.display = 'block';
@@ -945,6 +949,9 @@ async function viewOnlyLogin() {
             localStorage.setItem('trailcam_token', accessToken);
             localStorage.setItem('trailcam_email', 'Viewer');
             await initializeApp();
+            
+            // Auto-refresh to get new photos after cache loads
+            refreshPhotos();
         } else {
             throw new Error(authData.message || 'Login failed');
         }
@@ -1047,6 +1054,12 @@ async function login() {
             localStorage.setItem('trailcam_token', accessToken);
             localStorage.setItem('trailcam_email', email);
             await initializeApp();
+            
+            // Auto-refresh only for admin (who uses cache)
+            // Viewers with own login already loaded fresh from API
+            if (accessLevel === 'admin') {
+                refreshPhotos();
+            }
         } else {
             showLoginError(data.message || 'Login failed');
             hideLoading();
@@ -1128,6 +1141,7 @@ async function postToCache(data) {
 
 async function syncPhotosToCache(photos) {
     if (!isCacheEnabled() || !photos.length) return;
+    if (accessLevel !== 'admin') { console.log('Viewer - skipping cache write'); return; }
     console.log('Syncing', photos.length, 'photos to cache...');
     const result = await postToCache({ action: 'syncPhotos', photos });
     console.log('Photos synced:', result);
@@ -1136,44 +1150,52 @@ async function syncPhotosToCache(photos) {
 
 async function syncTagsToCache(tags) {
     if (!isCacheEnabled() || !tags.length) return;
+    if (accessLevel !== 'admin') return;
     const result = await postToCache({ action: 'syncTags', tags });
     console.log('Tags synced:', result);
 }
 
 async function syncGalleriesToCache(galleriesData) {
     if (!isCacheEnabled() || !galleriesData.length) return;
+    if (accessLevel !== 'admin') return;
     const result = await postToCache({ action: 'syncGalleries', galleries: galleriesData });
     console.log('Galleries synced:', result);
 }
 
 async function updatePhotoCacheAfterTagChange(photoId, tagIds) {
     if (!isCacheEnabled()) return;
+    if (accessLevel !== 'admin') return;
     await postToCache({ action: 'updatePhoto', photoId, updates: { tagIds } });
 }
 
 async function updatePhotoCacheAfterGalleryChange(photoId, photoGroupIds) {
     if (!isCacheEnabled()) return;
+    if (accessLevel !== 'admin') return;
     await postToCache({ action: 'updatePhoto', photoId, updates: { photoGroupIds } });
 }
 
 async function deletePhotoFromCache(photoId) {
     if (!isCacheEnabled()) return;
+    if (accessLevel !== 'admin') return;
     await postToCache({ action: 'deletePhoto', photoId });
 }
 
 async function deletePhotosFromCache(photoIds) {
     if (!isCacheEnabled() || !photoIds.length) return;
+    if (accessLevel !== 'admin') return;
     await postToCache({ action: 'deletePhotos', photoIds });
 }
 
 async function syncSunDataToCache(sunDataToSync) {
     if (!isCacheEnabled() || Object.keys(sunDataToSync).length === 0) return;
+    if (accessLevel !== 'admin') return;
     const result = await postToCache({ action: 'syncSunData', sunData: sunDataToSync });
     console.log('Sun data synced:', result);
 }
 
 async function syncMoonDataToCache(moonDataToSync) {
     if (!isCacheEnabled() || Object.keys(moonDataToSync).length === 0) return;
+    if (accessLevel !== 'admin') return;
     const result = await postToCache({ action: 'syncMoonData', moonData: moonDataToSync });
     console.log('Moon data synced:', result);
 }
@@ -1192,8 +1214,14 @@ async function initializeApp() {
     deleteModalInstance = new bootstrap.Modal(document.getElementById('deleteModal'));
     bulkDeleteModalInstance = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
     
+    // Decide whether to use cache:
+    // - Admin: always use cache
+    // - Viewer using Quick View (email='Viewer'): use cache
+    // - Viewer with own login: skip cache, load fresh from their account
+    const useCache = accessLevel === 'admin' || savedEmail === 'Viewer';
+    
     // Try loading from cache first for instant display
-    const cachedData = await loadFromCache();
+    const cachedData = useCache ? await loadFromCache() : null;
     
     if (cachedData && cachedData.photos && cachedData.photos.length > 0) {
         // Use cached data for instant display
@@ -1442,7 +1470,7 @@ async function loadPhotos() {
     let skippedCount = 0;
     let page = 0;
     
-    while (page < 25) { // Limit to 25 pages for testing
+    while (true) { // Fetch ALL photos - cache will speed up future loads
         showLoading(`Loading photos (page ${page + 1})...`);
         
         const response = await fetch(
