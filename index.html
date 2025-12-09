@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trail Cam HQ</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦌</text></svg>">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -2661,28 +2662,30 @@ function createMainChart() {
         chart: {
             backgroundColor: '#2a2a2b',
             style: { fontFamily: "'Segoe UI', sans-serif" },
-            marginLeft: 60,
-            marginBottom: 80
+            marginLeft: 60
         },
+        accessibility: { enabled: false },
         title: { text: 'Trail Observations', style: { color: '#E0E0E3', fontSize: '20px' } },
         legend: { 
             enabled: true, 
             itemStyle: { color: '#E0E0E3' }, 
             itemHoverStyle: { color: '#FFF' },
+            align: 'left',
             verticalAlign: 'bottom',
-            y: 20
+            floating: true,
+            y: -10
         },
         rangeSelector: {
             selected: 1,
             buttons: [{ type: 'week', count: 1, text: '1w' }, { type: 'month', count: 1, text: '1m' }, { type: 'month', count: 3, text: '3m' }, { type: 'all', text: 'All' }],
             inputEnabled: false,
             floating: true,
+            align: 'right',
             verticalAlign: 'bottom',
-            y: 20,
-            buttonPosition: { align: 'right' },
+            y: -10,
             buttonTheme: { fill: '#3e3e40', stroke: '#606063', style: { color: '#E0E0E3' }, states: { hover: { fill: '#4e4e50' }, select: { fill: '#1C86EE', style: { color: 'white' } } } }
         },
-        navigator: { enabled: true, height: 30 },
+        navigator: { enabled: true, height: 30, margin: 25 },
         xAxis: {
             type: 'datetime',
             gridLineWidth: 1,
@@ -2695,8 +2698,6 @@ function createMainChart() {
             max: 24 * 60 * 60 * 1000,
             tickInterval: 3 * 60 * 60 * 1000,
             gridLineColor: '#444',
-            top: '4%',
-            height: '96%',
             opposite: false,
             labels: { 
                 align: 'right',
@@ -2706,7 +2707,7 @@ function createMainChart() {
             },
             title: { enabled: false }
         }, {
-            top: '0%', height: '3%', min: 0, max: 1, gridLineWidth: 0, labels: { enabled: false }, title: { enabled: false }, opposite: false
+            top: '0%', height: '5%', min: 0, max: 1, gridLineWidth: 0, labels: { enabled: false }, title: { enabled: false }, opposite: false
         }],
         tooltip: {
             enabled: false  // Disable floating tooltip, we'll use the side panel
@@ -2743,6 +2744,7 @@ function createPolarChart() {
             type: 'column',
             backgroundColor: 'transparent'
         },
+        accessibility: { enabled: false },
         
         title: {
             text: 'Activity: Sunrise to Sunset',
@@ -2930,6 +2932,7 @@ function createWeatherChart() {
             type: 'column',
             backgroundColor: 'transparent'
         },
+        accessibility: { enabled: false },
         
         title: {
             text: title,
@@ -3297,6 +3300,7 @@ function createForecastChart(days) {
         chart: {
             backgroundColor: 'transparent'
         },
+        accessibility: { enabled: false },
         
         title: {
             text: null
@@ -3654,6 +3658,7 @@ function createPredictionChart() {
             backgroundColor: 'transparent',
             height: 300
         },
+        accessibility: { enabled: false },
         
         title: { text: null },
         
