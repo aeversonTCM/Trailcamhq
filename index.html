@@ -923,55 +923,14 @@ function isCacheEnabled() {
     return CONFIG.googleSheetsUrl && CONFIG.googleSheetsUrl !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 }
 
-// JSONP loader for GET requests (bypasses CORS for local files)
-function loadJsonp(url) {
-    return new Promise((resolve, reject) => {
-        const callbackName = 'cacheCallback' + Math.random().toString(36).substr(2, 9);
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.async = true;
-        
-        // Set up callback
-        window[callbackName] = function(data) {
-            cleanup();
-            resolve(data);
-        };
-        
-        function cleanup() {
-            delete window[callbackName];
-            if (script.parentNode) {
-                script.parentNode.removeChild(script);
-            }
-        }
-        
-        // Set up error handling
-        script.onerror = function(e) {
-            cleanup();
-            reject(new Error('JSONP request failed'));
-        };
-        
-        // Build URL with callback
-        script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
-        
-        // Add script to head (more reliable than body for local files)
-        (document.head || document.documentElement).appendChild(script);
-        
-        // Timeout after 30 seconds
-        setTimeout(() => {
-            if (window[callbackName]) {
-                cleanup();
-                reject(new Error('JSONP timeout'));
-            }
-        }, 30000);
-    });
-}
-
 async function loadFromCache() {
     if (!isCacheEnabled()) return null;
     
     try {
         showLoading('Loading from cache...');
-        const data = await loadJsonp(`${CONFIG.googleSheetsUrl}?action=getAll`);
+        const response = await fetch(`${CONFIG.googleSheetsUrl}?action=getAll`);
+        if (!response.ok) throw new Error('Cache fetch failed: ' + response.status);
+        const data = await response.json();
         if (data.error) throw new Error(data.error);
         console.log('Loaded from cache:', {
             photos: data.photos?.length || 0,
@@ -987,18 +946,16 @@ async function loadFromCache() {
     }
 }
 
-// POST to cache - fire and forget for writes from local files
 async function postToCache(data) {
     if (!isCacheEnabled()) return null;
     
     try {
-        // Use no-cors mode for writes - we can't read response but the write still happens
-        await fetch(CONFIG.googleSheetsUrl, {
+        const response = await fetch(CONFIG.googleSheetsUrl, {
             method: 'POST',
-            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(data)
         });
-        return { success: true };
+        return await response.json();
     } catch (error) {
         console.error('Cache POST error:', error);
         return null;
@@ -1008,20 +965,21 @@ async function postToCache(data) {
 async function syncPhotosToCache(photos) {
     if (!isCacheEnabled() || !photos.length) return;
     console.log('Syncing', photos.length, 'photos to cache...');
-    await postToCache({ action: 'syncPhotos', photos });
-    console.log('Photos sync request sent');
+    const result = await postToCache({ action: 'syncPhotos', photos });
+    console.log('Photos synced:', result);
+    return result;
 }
 
 async function syncTagsToCache(tags) {
     if (!isCacheEnabled() || !tags.length) return;
-    await postToCache({ action: 'syncTags', tags });
-    console.log('Tags sync request sent');
+    const result = await postToCache({ action: 'syncTags', tags });
+    console.log('Tags synced:', result);
 }
 
 async function syncGalleriesToCache(galleriesData) {
     if (!isCacheEnabled() || !galleriesData.length) return;
-    await postToCache({ action: 'syncGalleries', galleries: galleriesData });
-    console.log('Galleries sync request sent');
+    const result = await postToCache({ action: 'syncGalleries', galleries: galleriesData });
+    console.log('Galleries synced:', result);
 }
 
 async function updatePhotoCacheAfterTagChange(photoId, tagIds) {
@@ -1046,14 +1004,14 @@ async function deletePhotosFromCache(photoIds) {
 
 async function syncSunDataToCache(sunDataToSync) {
     if (!isCacheEnabled() || Object.keys(sunDataToSync).length === 0) return;
-    await postToCache({ action: 'syncSunData', sunData: sunDataToSync });
-    console.log('Sun data sync request sent');
+    const result = await postToCache({ action: 'syncSunData', sunData: sunDataToSync });
+    console.log('Sun data synced:', result);
 }
 
 async function syncMoonDataToCache(moonDataToSync) {
     if (!isCacheEnabled() || Object.keys(moonDataToSync).length === 0) return;
-    await postToCache({ action: 'syncMoonData', moonData: moonDataToSync });
-    console.log('Moon data sync request sent');
+    const result = await postToCache({ action: 'syncMoonData', moonData: moonDataToSync });
+    console.log('Moon data synced:', result);
 }
 
 async function initializeApp() {
