@@ -1,0 +1,3452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trail Cam Manager</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Highcharts -->
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #1a1a1b;
+            --bg-card: #2a2a2b;
+            --bg-input: #3e3e40;
+            --text-primary: #E0E0E3;
+            --text-muted: #888;
+            --accent-green: #4ade80;
+            --accent-blue: #1C86EE;
+            --accent-red: #dc2626;
+            --accent-gold: #ffd700;
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background-color: var(--bg-card) !important;
+            border-bottom: 1px solid #444;
+        }
+        
+        .navbar-brand {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--accent-gold) !important;
+        }
+        
+        .nav-tabs { border-bottom: none; }
+        
+        .nav-tabs .nav-link {
+            color: var(--text-muted);
+            border: none;
+            padding: 1rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link:hover { color: var(--text-primary); }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--accent-green);
+            background: transparent;
+            border-bottom: 3px solid var(--accent-green);
+        }
+        
+        /* Cards */
+        .card {
+            background-color: var(--bg-card);
+            border: none;
+            border-radius: 8px;
+        }
+        
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid #444;
+            font-weight: 600;
+        }
+        
+        /* Forms */
+        .form-control, .form-select {
+            background-color: var(--bg-input);
+            border: 1px solid #555;
+            color: var(--text-primary);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--bg-input);
+            border-color: var(--accent-green);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(74, 222, 128, 0.25);
+        }
+        
+        .form-select option { background-color: var(--bg-input); }
+        
+        /* Buttons */
+        .btn-success { background-color: var(--accent-green); border-color: var(--accent-green); color: #000; }
+        .btn-success:hover { background-color: #22c55e; border-color: #22c55e; color: #000; }
+        .btn-outline-success { border-color: var(--accent-green); color: var(--accent-green); }
+        .btn-outline-success:hover { background-color: var(--accent-green); color: #000; }
+        .btn-outline-secondary { border-color: #666; color: var(--text-muted); }
+        .btn-outline-secondary:hover { background-color: var(--bg-input); color: var(--text-primary); }
+        .btn-primary { background-color: var(--accent-blue); border-color: var(--accent-blue); }
+        .btn-danger { background-color: var(--accent-red); border-color: var(--accent-red); }
+        .btn-warning { background-color: #f59e0b; border-color: #f59e0b; color: #000; }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner-border { width: 3rem; height: 3rem; }
+        
+        /* Login Section */
+        #loginSection {
+            min-height: calc(100vh - 70px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card { max-width: 400px; width: 100%; }
+        
+        /* Photo Viewer Styles */
+        .photo-wrapper {
+            background: #1a1a1b;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .photo-wrapper img {
+            max-width: 1024px;
+            max-height: 768px;
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        .photo-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .photo-info span { display: flex; align-items: center; gap: 5px; }
+        
+        .nav-btn {
+            background: var(--bg-input);
+            border: none;
+            color: var(--text-primary);
+            padding: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        
+        .nav-btn:hover { background: #555; }
+        
+        /* Grid View */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .grid-item {
+            position: relative;
+            background: var(--bg-input);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+        
+        .grid-item:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .grid-item.selected { border-color: var(--accent-green); }
+        
+        .grid-item-checkbox {
+            position: absolute;
+            top: 8px; left: 8px;
+            width: 26px; height: 26px;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #fff;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            z-index: 10;
+        }
+        
+        .grid-item.selected .grid-item-checkbox { background: var(--accent-green); border-color: var(--accent-green); }
+        .grid-item-img { width: 100%; height: 200px; object-fit: cover; }
+        
+        .grid-zoom-overlay {
+            position: absolute;
+            bottom: 60px; left: 0; right: 0;
+            height: 40px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 8px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            opacity: 0;
+            cursor: zoom-in;
+        }
+        
+        .grid-item:hover .grid-zoom-overlay { opacity: 1; }
+        
+        .grid-item-info { padding: 8px 10px; font-size: 12px; color: var(--text-muted); }
+        .grid-item-info .camera { color: var(--text-primary); font-weight: bold; margin-bottom: 3px; }
+        .grid-item-info .tag { color: var(--accent-gold); }
+        .grid-item-info .gallery { color: var(--accent-green); }
+        .grid-item-info .gallery-icon { width: 16px; height: 16px; vertical-align: middle; margin-right: 2px; }
+        
+        /* Zoom Modal */
+        .zoom-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            cursor: zoom-out;
+        }
+        
+        .zoom-modal-container {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: default;
+        }
+        
+        .zoom-modal-img {
+            width: 1024px;
+            max-width: 95vw;
+            height: auto;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        
+        .zoom-modal-close {
+            position: absolute;
+            top: -15px; right: -15px;
+            width: 36px; height: 36px;
+            background: var(--bg-input);
+            border: 2px solid #555;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Progress bar */
+        .progress { height: 6px; background-color: var(--bg-input); }
+        .progress-bar { background-color: var(--accent-green); }
+        
+        /* Keyboard hints */
+        .keyboard-hint {
+            color: var(--text-muted);
+            font-size: 12px;
+            padding: 10px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .keyboard-hint kbd {
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        
+        /* Sidebar */
+        .grid-sidebar { display: flex; flex-direction: column; gap: 8px; min-width: 160px; }
+        .grid-selected-count { color: var(--accent-green); font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+        
+        /* Dashboard */
+        #chart_main { height: 500px; background: var(--bg-card); border-radius: 8px; }
+        #chart_polar { width: 500px; height: 500px; }
+        #chart_weather { width: 100%; height: 450px; }
+        #chart_forecast { height: 300px; }
+        #chart_prediction { height: 300px; }
+        
+        .tooltip-panel {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 500px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .tooltip-panel img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        
+        .tooltip-panel .info-row {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .tooltip-panel .info-label {
+            color: var(--text-muted);
+        }
+        
+        .tooltip-panel .info-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="spinner-border text-success" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3" id="loadingText">Loading...</p>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-camera-fill text-success me-2"></i>Trail Cam Manager
+        </a>
+        
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="photos-tab" data-bs-toggle="tab" data-bs-target="#photosContent" type="button" role="tab">
+                    <i class="bi bi-images me-1"></i>Photos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboardContent" type="button" role="tab">
+                    <i class="bi bi-bar-chart-fill me-1"></i>Dashboard
+                </button>
+            </li>
+        </ul>
+        
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-muted" id="userDisplay" style="display: none;">
+                <i class="bi bi-person-circle me-1"></i><span id="userName"></span>
+            </span>
+            <button class="btn btn-outline-secondary btn-sm" id="logoutBtn" onclick="logout()" style="display: none;">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Login Section -->
+<div id="loginSection">
+    <div class="card login-card">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-camera-fill text-success" style="font-size: 3rem;"></i>
+                <h4 class="mt-2">Trail Cam Manager</h4>
+                <p class="text-muted">Sign in with your Tactacam account</p>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" placeholder="your@email.com">
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="••••••••">
+            </div>
+            <div class="d-grid gap-2">
+                <button class="btn btn-success" onclick="login()">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                </button>
+            </div>
+            <div id="loginError" class="alert alert-danger mt-3" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div id="mainContent" style="display: none;">
+    <div class="tab-content">
+        
+        <!-- Photos Tab -->
+        <div class="tab-pane fade show active" id="photosContent" role="tabpanel">
+            <div class="container-fluid py-3">
+                
+                <!-- Filter Bar -->
+                <div class="card mb-3">
+                    <div class="card-body py-2">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-auto">
+                                <select id="galleryFilter" class="form-select form-select-sm" onchange="applyFilters()">
+                                    <option value="">All Photos</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select id="tagFilter" class="form-select form-select-sm" onchange="applyFilters()">
+                                    <option value="">All Tags</option>
+                                    <option value="untagged">Untagged</option>
+                                    <option value="Buck">Buck</option>
+                                    <option value="Doe">Doe</option>
+                                    <option value="Turkey">Turkey</option>
+                                    <option value="Bear">Bear</option>
+                                    <option value="Predator">Predator</option>
+                                    <option value="Bird">Bird</option>
+                                    <option value="Human">Human</option>
+                                    <option value="Vehicle/ATV">Vehicle/ATV</option>
+                                    <option value="Other">Other</option>
+                                    <option value="No Animals">No Animals</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select id="cameraFilter" class="form-select form-select-sm" onchange="applyFilters()">
+                                    <option value="">All Cameras</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <div class="btn-group">
+                                    <button class="btn btn-outline-success btn-sm" id="viewToggleBtn" onclick="toggleView()">
+                                        <i class="bi bi-grid-3x3-gap-fill me-1"></i>Grid View
+                                    </button>
+                                    <button class="btn btn-outline-success btn-sm" onclick="refreshPhotos()">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-auto ms-auto">
+                                <span class="text-muted">
+                                    <strong id="currentPosition">0</strong> of <strong id="totalCount">0</strong>
+                                </span>
+                            </div>
+                            <div class="col-12">
+                                <div class="progress">
+                                    <div class="progress-bar" id="progressFill" role="progressbar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Single Photo View -->
+                <div id="photoContainer">
+                    <div class="row">
+                        <div class="col-lg-9">
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="nav-btn" onclick="prevPhoto()"><i class="bi bi-chevron-left"></i></button>
+                                <div class="photo-wrapper flex-grow-1">
+                                    <img id="photoImage" src="" alt="Trail cam photo" />
+                                </div>
+                                <button class="nav-btn" onclick="nextPhoto()"><i class="bi bi-chevron-right"></i></button>
+                            </div>
+                            <div class="photo-info" id="photoInfo"></div>
+                            <div class="keyboard-hint">
+                                <strong>Keyboard:</strong> 
+                                <kbd>←</kbd> Previous, <kbd>→</kbd> Next | 
+                                <kbd>B</kbd> Buck, <kbd>D</kbd> Doe, <kbd>T</kbd> Turkey, <kbd>R</kbd> Bear, 
+                                <kbd>P</kbd> Predator, <kbd>I</kbd> Bird, <kbd>H</kbd> Human, <kbd>V</kbd> Vehicle, 
+                                <kbd>O</kbd> Other, <kbd>N</kbd> No Animals | <kbd>G</kbd> Gallery
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="card">
+                                <div class="card-header">Actions</div>
+                                <div class="card-body d-grid gap-2">
+                                    <select id="tagDropdown" class="form-select" onchange="tagFromDropdown()">
+                                        <option value="">🏷️ Select Tag...</option>
+                                        <option value="__none__">🚫 Clear Tag</option>
+                                        <option value="Buck">🦌 Buck</option>
+                                        <option value="Doe">🦌 Doe</option>
+                                        <option value="Turkey">🦃 Turkey</option>
+                                        <option value="Bear">🐻 Bear</option>
+                                        <option value="Predator">🐺 Predator</option>
+                                        <option value="Bird">🐦 Bird</option>
+                                        <option value="Human">🧑 Human</option>
+                                        <option value="Vehicle/ATV">🚗 Vehicle</option>
+                                        <option value="Other">❓ Other</option>
+                                        <option value="No Animals">❌ No Animals</option>
+                                    </select>
+                                    <hr class="my-2">
+                                    <button class="btn btn-success" onclick="openGalleryModal()">
+                                        <i class="bi bi-folder-plus me-1"></i>Add to Gallery
+                                    </button>
+                                    <button class="btn btn-danger" onclick="openDeleteModal()">
+                                        <i class="bi bi-trash me-1"></i>Delete Photo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Grid View -->
+                <div id="gridContainer" style="display: none;">
+                    <div class="row">
+                        <div class="col-lg-10">
+                            <div class="photo-grid" id="photoGrid"></div>
+                            <div class="text-center mt-3" id="gridLoadMore" style="display: none;">
+                                <button class="btn btn-outline-secondary" onclick="loadMoreGridItems()">Load More</button>
+                            </div>
+                        </div>
+                        <div class="col-lg-2">
+                            <div class="card">
+                                <div class="card-header">Bulk Actions</div>
+                                <div class="card-body grid-sidebar">
+                                    <div class="grid-selected-count" id="gridSelectedCount">None selected</div>
+                                    <button class="btn btn-primary btn-sm" id="selectToggleBtn" onclick="toggleSelectAll()">Select All</button>
+                                    <button class="btn btn-warning btn-sm" id="selectUntaggedBtn" onclick="selectUntagged()">Select Untagged</button>
+                                    <hr class="my-2">
+                                    <select id="bulkTagDropdown" class="form-select form-select-sm" onchange="bulkTagFromDropdown()">
+                                        <option value="">🏷️ Tag...</option>
+                                        <option value="__none__">🚫 Clear</option>
+                                        <option value="Buck">🦌 Buck</option>
+                                        <option value="Doe">🦌 Doe</option>
+                                        <option value="Turkey">🦃 Turkey</option>
+                                        <option value="Bear">🐻 Bear</option>
+                                        <option value="Predator">🐺 Predator</option>
+                                        <option value="Bird">🐦 Bird</option>
+                                        <option value="Human">🧑 Human</option>
+                                        <option value="Vehicle/ATV">🚗 Vehicle</option>
+                                        <option value="Other">❓ Other</option>
+                                        <option value="No Animals">❌ No Animals</option>
+                                    </select>
+                                    <hr class="my-2">
+                                    <button class="btn btn-success btn-sm" onclick="openBulkGalleryModal()">
+                                        <i class="bi bi-folder-plus me-1"></i>Add to Gallery
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="openBulkDeleteModal()">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- No Photos Message -->
+                <div id="completeMessage" class="text-center py-5" style="display: none;">
+                    <i class="bi bi-camera text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">No Photos Found</h4>
+                    <p class="text-muted" id="completeSummary">No photos match the current filter.</p>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Dashboard Tab -->
+        <div class="tab-pane fade" id="dashboardContent" role="tabpanel">
+            <div class="container-fluid py-3">
+                
+                <!-- Dashboard Filters -->
+                <div class="card mb-3">
+                    <div class="card-body py-2">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-auto">
+                                <select id="dashLocationFilter" class="form-select form-select-sm" onchange="applyDashboardFilters()">
+                                    <option value="">All Locations</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select id="dashCameraFilter" class="form-select form-select-sm" onchange="applyDashboardFilters()">
+                                    <option value="">All Cameras</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select id="dashNameFilter" class="form-select form-select-sm" onchange="applyDashboardFilters()">
+                                    <option value="">All Names</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select id="dashTagFilter" class="form-select form-select-sm" onchange="applyDashboardFilters()">
+                                    <option value="">All Tags</option>
+                                    <option value="Buck">Buck</option>
+                                    <option value="Doe">Doe</option>
+                                    <option value="Turkey">Turkey</option>
+                                    <option value="Bear">Bear</option>
+                                    <option value="Predator">Predator</option>
+                                    <option value="Bird">Bird</option>
+                                    <option value="Human">Human</option>
+                                    <option value="Vehicle/ATV">Vehicle/ATV</option>
+                                    <option value="Other">Other</option>
+                                    <option value="No Animals">No Animals</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearDashboardFilters()">Clear Filters</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Chart -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <div id="chart_main"></div>
+                            </div>
+                            <div class="col-4">
+                                <div id="tooltipPanel" class="tooltip-panel">
+                                    <div class="text-muted text-center py-5">
+                                        <i class="bi bi-cursor" style="font-size: 2rem;"></i>
+                                        <p class="mt-2 mb-0">Hover over a point to see details</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Polar Chart -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 d-flex flex-column align-items-center">
+                                <div class="mb-2">
+                                    <label class="text-muted small me-2">Show photos by:</label>
+                                    <select id="weatherField" class="form-select form-select-sm d-inline-block w-auto" onchange="updateWeatherChart()">
+                                        <option value="windDirection">Wind Direction</option>
+                                        <option value="windSpeed">Wind Speed</option>
+                                        <option value="temperature">Temperature</option>
+                                        <option value="pressure">Barometric Pressure</option>
+                                        <option value="moonPhase">Moon Phase</option>
+                                    </select>
+                                </div>
+                                <div id="chart_weather"></div>
+                            </div>
+                            <div class="col-md-6 d-flex justify-content-center">
+                                <div id="chart_polar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Activity Prediction & Forecast Charts -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Activity Prediction -->
+                            <div class="col-md-6">
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                    <span class="text-muted small">🦌 Activity Prediction</span>
+                                    <select id="predictionAnimalFilter" class="form-select form-select-sm w-auto" style="font-size: 11px;" onchange="updatePredictionChart()">
+                                        <option value="all">All Deer</option>
+                                        <option value="buck">Buck</option>
+                                        <option value="doe">Doe</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex flex-wrap align-items-center gap-1 mb-2" style="font-size: 11px;">
+                                    <span class="text-muted">Weights:</span>
+                                    <span style="color: #AF7AC5;">📊</span>
+                                    <input type="number" id="weightPressure" value="3" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span style="color: #7FB3D5;">💨D</span>
+                                    <input type="number" id="weightWindDir" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span style="color: #7FB3D5;">💨S</span>
+                                    <input type="number" id="weightWindSpeed" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span style="color: #D4AC0D;">🌙</span>
+                                    <input type="number" id="weightMoon" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span style="color: #F4D03F;">🌡️</span>
+                                    <input type="number" id="weightTemp" value="1" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span class="text-muted" id="totalWeightDisplay">= 10</span>
+                                </div>
+                                <div id="chart_prediction"></div>
+                                <div id="optimalConditions" class="mt-2 p-2 rounded" style="background: #333; font-size: 11px;">
+                                    <span class="text-muted">Loading optimal conditions...</span>
+                                </div>
+                            </div>
+                            <!-- Forecast -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2" style="font-size: 13px;">🌤️ 10-Day Forecast & Current Conditions</h6>
+                                <div id="currentConditions" class="d-flex gap-3 p-2 mb-2 rounded flex-wrap" style="background: #333; font-size: 11px;">
+                                    <div class="text-muted">Loading current conditions...</div>
+                                </div>
+                                <div id="chart_forecast"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+<div class="modal fade" id="galleryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="bi bi-folder-plus me-2"></i>Add to Gallery</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3" id="galleryGrid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Gallery Modal -->
+<div class="modal fade" id="bulkGalleryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="bi bi-folder-plus me-2"></i>Add Selected to Gallery</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3" id="bulkGalleryGrid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Delete Photo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Are you sure you want to delete this photo?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Delete Selected Photos</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Are you sure you want to delete <strong id="bulkDeleteCount">0</strong> photos?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmBulkDelete()">Delete All</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Zoom Modal -->
+<div id="zoomModal" class="zoom-modal-overlay" style="display: none;" onclick="closeZoomModal()">
+    <div class="zoom-modal-container" onclick="event.stopPropagation()">
+        <img id="zoomImage" class="zoom-modal-img" src="" alt="Zoomed photo" />
+        <button class="zoom-modal-close" onclick="closeZoomModal()">×</button>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ============== CONFIG ==============
+const CONFIG = {
+    cognitoUrl: 'https://cognito-idp.us-east-1.amazonaws.com/',
+    cognitoClientId: '6r9tpojvgvkci5trla0ip14mon',
+    apiBaseUrl: 'https://api.reveal.ishareit.net/v1',
+    visualCrossingApiKey: '3PHP49SVRX5U75Q4CSD5R995P',
+    fixedLat: 35.28705,
+    fixedLng: -82.48265,
+    timezoneOffset: -5,
+    // Google Drive JSON Cache
+    googleSheetsUrl: 'https://script.google.com/macros/s/AKfycbz11U24W_KnkhgpONyk5hESy_d40uTYkTT1BsTzYdEQvnvPYF-N7PMHdtEJdvLpM3o3/exec'
+};
+
+// ============== STATE ==============
+let accessToken = null;
+let allPhotos = [];
+let filteredPhotos = [];
+let currentIndex = 0;
+let tagsLookup = {};
+let tagIdToName = {};
+let groupsLookup = {};
+let galleries = [];
+let cameras = new Set();
+let currentView = 'single';
+let gridDisplayCount = 50;
+let selectedPhotos = new Set();
+let cacheEnabled = false; // Set to true once Google Sheets URL is configured
+
+// Dashboard state
+let sunData = {};
+let moonData = {};
+let cachedForecastData = null;
+let forecastDays = [];
+let sunriseArray = [];
+let sunsetArray = [];
+let moonArray = [];
+let dashboardInitialized = false;
+
+// Dynamic tag arrays - keyed by tag type
+let tagArrays = {};
+const tagConfig = {
+    'buck': { color: '#FF4444', symbol: 'triangle', radius: 5, name: 'Buck' },
+    'doe': { color: '#1C86EE', symbol: 'circle', radius: 4, name: 'Doe' },
+    'turkey': { color: '#FF8C00', symbol: 'square', radius: 4, name: 'Turkey' },
+    'bear': { color: '#8B4513', symbol: 'diamond', radius: 5, name: 'Bear' },
+    'predator': { color: '#9932CC', symbol: 'triangle-down', radius: 5, name: 'Predator' },
+    'bird': { color: '#00CED1', symbol: 'circle', radius: 3, name: 'Bird' },
+    'human': { color: '#FFD700', symbol: 'square', radius: 4, name: 'Human' },
+    'vehicle': { color: '#A9A9A9', symbol: 'diamond', radius: 4, name: 'Vehicle/ATV' },
+    'other_tagged': { color: '#90EE90', symbol: 'circle', radius: 3, name: 'Other' },
+    'no_animals': { color: '#696969', symbol: 'circle', radius: 3, name: 'No Animals' }
+};
+
+// Bootstrap modals
+let galleryModalInstance, bulkGalleryModalInstance, deleteModalInstance, bulkDeleteModalInstance;
+
+// ============== LOADING ==============
+function showLoading(msg = 'Loading...') {
+    document.getElementById('loadingText').textContent = msg;
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+// ============== AUTH ==============
+async function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    if (!email || !password) {
+        showLoginError('Please enter email and password');
+        return;
+    }
+    
+    showLoading('Signing in...');
+    
+    try {
+        const response = await fetch(CONFIG.cognitoUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-amz-json-1.1',
+                'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth'
+            },
+            body: JSON.stringify({
+                AuthFlow: 'USER_PASSWORD_AUTH',
+                ClientId: CONFIG.cognitoClientId,
+                AuthParameters: { USERNAME: email, PASSWORD: password }
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.AuthenticationResult) {
+            accessToken = data.AuthenticationResult.AccessToken;
+            localStorage.setItem('trailcam_token', accessToken);
+            localStorage.setItem('trailcam_email', email);
+            await initializeApp();
+        } else {
+            showLoginError(data.message || 'Login failed');
+            hideLoading();
+        }
+    } catch (error) {
+        showLoginError('Connection error: ' + error.message);
+        hideLoading();
+    }
+}
+
+function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+
+function logout() {
+    accessToken = null;
+    localStorage.removeItem('trailcam_token');
+    localStorage.removeItem('trailcam_email');
+    document.getElementById('loginSection').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('userDisplay').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+}
+
+async function checkSession() {
+    // Skip session restore - require fresh login
+    // This avoids CORS issues on initial page load
+    hideLoading();
+}
+
+// ============== GOOGLE DRIVE JSON CACHE ==============
+function isCacheEnabled() {
+    return CONFIG.googleSheetsUrl && CONFIG.googleSheetsUrl !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+}
+
+// JSONP loader for GET requests (bypasses CORS for local files)
+function loadJsonp(url) {
+    return new Promise((resolve, reject) => {
+        const callbackName = 'cacheCallback' + Math.random().toString(36).substr(2, 9);
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        
+        // Set up callback
+        window[callbackName] = function(data) {
+            cleanup();
+            resolve(data);
+        };
+        
+        function cleanup() {
+            delete window[callbackName];
+            if (script.parentNode) {
+                script.parentNode.removeChild(script);
+            }
+        }
+        
+        // Set up error handling
+        script.onerror = function(e) {
+            cleanup();
+            reject(new Error('JSONP request failed'));
+        };
+        
+        // Build URL with callback
+        script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+        
+        // Add script to head (more reliable than body for local files)
+        (document.head || document.documentElement).appendChild(script);
+        
+        // Timeout after 30 seconds
+        setTimeout(() => {
+            if (window[callbackName]) {
+                cleanup();
+                reject(new Error('JSONP timeout'));
+            }
+        }, 30000);
+    });
+}
+
+async function loadFromCache() {
+    if (!isCacheEnabled()) return null;
+    
+    try {
+        showLoading('Loading from cache...');
+        const data = await loadJsonp(`${CONFIG.googleSheetsUrl}?action=getAll`);
+        if (data.error) throw new Error(data.error);
+        console.log('Loaded from cache:', {
+            photos: data.photos?.length || 0,
+            tags: data.tags?.length || 0,
+            galleries: data.galleries?.length || 0,
+            sunDataDates: Object.keys(data.sunData || {}).length,
+            moonDataEntries: Object.keys(data.moonData || {}).length
+        });
+        return data;
+    } catch (error) {
+        console.error('Cache load error:', error);
+        return null;
+    }
+}
+
+// POST to cache - fire and forget for writes from local files
+async function postToCache(data) {
+    if (!isCacheEnabled()) return null;
+    
+    try {
+        // Use no-cors mode for writes - we can't read response but the write still happens
+        await fetch(CONFIG.googleSheetsUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(data)
+        });
+        return { success: true };
+    } catch (error) {
+        console.error('Cache POST error:', error);
+        return null;
+    }
+}
+
+async function syncPhotosToCache(photos) {
+    if (!isCacheEnabled() || !photos.length) return;
+    console.log('Syncing', photos.length, 'photos to cache...');
+    await postToCache({ action: 'syncPhotos', photos });
+    console.log('Photos sync request sent');
+}
+
+async function syncTagsToCache(tags) {
+    if (!isCacheEnabled() || !tags.length) return;
+    await postToCache({ action: 'syncTags', tags });
+    console.log('Tags sync request sent');
+}
+
+async function syncGalleriesToCache(galleriesData) {
+    if (!isCacheEnabled() || !galleriesData.length) return;
+    await postToCache({ action: 'syncGalleries', galleries: galleriesData });
+    console.log('Galleries sync request sent');
+}
+
+async function updatePhotoCacheAfterTagChange(photoId, tagIds) {
+    if (!isCacheEnabled()) return;
+    await postToCache({ action: 'updatePhoto', photoId, updates: { tagIds } });
+}
+
+async function updatePhotoCacheAfterGalleryChange(photoId, photoGroupIds) {
+    if (!isCacheEnabled()) return;
+    await postToCache({ action: 'updatePhoto', photoId, updates: { photoGroupIds } });
+}
+
+async function deletePhotoFromCache(photoId) {
+    if (!isCacheEnabled()) return;
+    await postToCache({ action: 'deletePhoto', photoId });
+}
+
+async function deletePhotosFromCache(photoIds) {
+    if (!isCacheEnabled() || !photoIds.length) return;
+    await postToCache({ action: 'deletePhotos', photoIds });
+}
+
+async function syncSunDataToCache(sunDataToSync) {
+    if (!isCacheEnabled() || Object.keys(sunDataToSync).length === 0) return;
+    await postToCache({ action: 'syncSunData', sunData: sunDataToSync });
+    console.log('Sun data sync request sent');
+}
+
+async function syncMoonDataToCache(moonDataToSync) {
+    if (!isCacheEnabled() || Object.keys(moonDataToSync).length === 0) return;
+    await postToCache({ action: 'syncMoonData', moonData: moonDataToSync });
+    console.log('Moon data sync request sent');
+}
+
+async function initializeApp() {
+    const savedEmail = localStorage.getItem('trailcam_email');
+    document.getElementById('userName').textContent = savedEmail || 'User';
+    document.getElementById('userDisplay').style.display = 'inline';
+    document.getElementById('logoutBtn').style.display = 'inline-block';
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    
+    // Initialize modals
+    galleryModalInstance = new bootstrap.Modal(document.getElementById('galleryModal'));
+    bulkGalleryModalInstance = new bootstrap.Modal(document.getElementById('bulkGalleryModal'));
+    deleteModalInstance = new bootstrap.Modal(document.getElementById('deleteModal'));
+    bulkDeleteModalInstance = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
+    
+    // Try loading from cache first for instant display
+    const cachedData = await loadFromCache();
+    
+    if (cachedData && cachedData.photos && cachedData.photos.length > 0) {
+        // Use cached data for instant display
+        showLoading('Loading cached data...');
+        
+        // Load cached tags
+        if (cachedData.tags) {
+            cachedData.tags.forEach(tag => {
+                tagsLookup[tag.name] = tag.tagId;
+                tagIdToName[tag.tagId] = tag.name;
+            });
+            populateTagFilter();
+        }
+        
+        // Load cached galleries
+        if (cachedData.galleries) {
+            cachedData.galleries.forEach(g => {
+                groupsLookup[g.photoGroupId] = g.name;
+            });
+            galleries = cachedData.galleries;
+            populateGalleryFilter();
+        }
+        
+        // Load cached sun data
+        if (cachedData.sunData && Object.keys(cachedData.sunData).length > 0) {
+            sunData = cachedData.sunData;
+            console.log(`Loaded ${Object.keys(sunData).length} sun data entries from cache`);
+        }
+        
+        // Load cached moon data (for future use)
+        if (cachedData.moonData && Object.keys(cachedData.moonData).length > 0) {
+            moonData = cachedData.moonData;
+            console.log(`Loaded ${Object.keys(moonData).length} moon data entries from cache`);
+        }
+        
+        // Load cached photos
+        allPhotos = cachedData.photos;
+        cachedData.photos.forEach(p => {
+            if (p.cameraName) cameras.add(p.cameraName);
+        });
+        populateCameraFilter();
+        filteredPhotos = [...allPhotos];
+        displayCurrentPhoto();
+        
+        console.log(`Loaded ${allPhotos.length} photos from cache`);
+        
+        // Background sync with Reveal API for new photos
+        backgroundSyncWithReveal();
+    } else {
+        // No cache - load everything from Reveal API
+        await loadTags();
+        await loadPhotoGroups();
+        await loadGalleries();
+        await loadPhotos();
+    }
+    
+    // Pre-fetch sun data for dashboard
+    await prefetchSunData();
+    
+    // Process photos for dashboard (needed for prediction chart)
+    await processPhotosForPrediction();
+    
+    // Pre-fetch forecast data (will also create prediction chart)
+    await prefetchForecast();
+    
+    // Dashboard tab listener
+    document.getElementById('dashboard-tab').addEventListener('shown.bs.tab', () => {
+        if (!dashboardInitialized) {
+            initializeDashboard();
+        }
+    });
+    
+    hideLoading();
+}
+
+async function backgroundSyncWithReveal() {
+    // Run in background - don't block UI
+    console.log('Starting background sync with Reveal API...');
+    
+    try {
+        // Get latest tags
+        const tagsResponse = await fetch(`${CONFIG.apiBaseUrl}/photo-tags`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        const tagsData = await tagsResponse.json();
+        if (tagsData.response && tagsData.response.photoTags) {
+            const tags = tagsData.response.photoTags;
+            tags.forEach(tag => {
+                tagsLookup[tag.name] = tag.tagId;
+                tagIdToName[tag.tagId] = tag.name;
+            });
+            syncTagsToCache(tags);
+        }
+        
+        // Get latest galleries
+        const galleriesResponse = await fetch(`${CONFIG.apiBaseUrl}/photo-groups`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        const galleriesData = await galleriesResponse.json();
+        if (galleriesData.response && galleriesData.response.photoGroups) {
+            const newGalleries = galleriesData.response.photoGroups;
+            newGalleries.forEach(g => {
+                groupsLookup[g.photoGroupId] = g.name;
+            });
+            galleries = newGalleries;
+            syncGalleriesToCache(newGalleries);
+        }
+        
+        // Check for new photos (compare with cached)
+        const existingIds = new Set(allPhotos.map(p => p.photoId));
+        const newPhotos = [];
+        
+        // Fetch recent pages to find new photos
+        let page = 1;
+        const maxPages = 5; // Only check first 5 pages for new photos
+        
+        while (page <= maxPages) {
+            const url = `${CONFIG.apiBaseUrl}/photos?page=${page}&pageSize=500&sortField=photoDate&sortDirection=desc`;
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const data = await response.json();
+            
+            if (!data.response || !data.response.photos || data.response.photos.length === 0) break;
+            
+            let foundExisting = false;
+            for (const photo of data.response.photos) {
+                if (existingIds.has(photo.photoId)) {
+                    foundExisting = true;
+                    // Update existing photo with latest data (tags/galleries may have changed)
+                    const existingPhoto = allPhotos.find(p => p.photoId === photo.photoId);
+                    if (existingPhoto) {
+                        existingPhoto.tagIds = photo.tagIds;
+                        existingPhoto.photoGroupIds = photo.photoGroupIds;
+                    }
+                } else {
+                    newPhotos.push(photo);
+                    existingIds.add(photo.photoId);
+                }
+            }
+            
+            // If we found existing photos, we've caught up
+            if (foundExisting && page > 1) break;
+            
+            page++;
+        }
+        
+        if (newPhotos.length > 0) {
+            console.log(`Found ${newPhotos.length} new photos`);
+            allPhotos = [...newPhotos, ...allPhotos];
+            newPhotos.forEach(p => {
+                if (p.cameraName) cameras.add(p.cameraName);
+            });
+            
+            // Update display
+            filteredPhotos = [...allPhotos];
+            applyFilters();
+            
+            // Sync new photos to cache
+            syncPhotosToCache(newPhotos);
+        }
+        
+        console.log('Background sync complete');
+    } catch (error) {
+        console.error('Background sync error:', error);
+    }
+}
+
+// ============== LOAD DATA ==============
+async function loadTags() {
+    const response = await fetch(`${CONFIG.apiBaseUrl}/photo-tags`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const data = await response.json();
+    
+    if (data.response && data.response.photoTags) {
+        data.response.photoTags.forEach(tag => {
+            tagsLookup[tag.name] = tag.tagId;
+            tagIdToName[tag.tagId] = tag.name;
+        });
+    }
+    
+    console.log('Tags loaded:', Object.keys(tagsLookup).length);
+    console.log('tagsLookup:', tagsLookup);
+    console.log('tagIdToName:', tagIdToName);
+}
+
+function populateTagFilter() {
+    // Tags are used in tag buttons and dropdowns, which are hardcoded in HTML
+    // This function just logs the status
+    console.log('Tags populated:', Object.keys(tagsLookup).length);
+}
+
+function populateGalleryFilter() {
+    const select = document.getElementById('galleryFilter');
+    const current = select.value;
+    select.innerHTML = '<option value="">All Photos</option>';
+    galleries.forEach(g => {
+        const sel = g.photoGroupId === current ? ' selected' : '';
+        select.innerHTML += `<option value="${g.photoGroupId}"${sel}>${g.name} (${g.photoCount || g.count || 0})</option>`;
+    });
+    
+    populateGalleryGrids();
+}
+
+async function loadPhotoGroups() {
+    const response = await fetch(`${CONFIG.apiBaseUrl}/photoGroups?galleryType=standard`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const data = await response.json();
+    
+    if (data.response && data.response.photoGroups) {
+        data.response.photoGroups.forEach(group => {
+            groupsLookup[group.photoGroupId] = group.name;
+        });
+    }
+}
+
+async function loadGalleries() {
+    const response = await fetch(`${CONFIG.apiBaseUrl}/photoGroups?galleryType=standard`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const data = await response.json();
+    
+    if (data.response && data.response.photoGroups) {
+        galleries = data.response.photoGroups.map(g => ({
+            photoGroupId: g.photoGroupId,
+            name: g.name,
+            photoUrl: g.photoUrl || null,
+            count: g.count || 0,
+            photoCount: g.count || 0
+        }));
+    }
+    
+    populateGalleryFilter();
+}
+
+async function loadPhotos() {
+    showLoading('Loading photos...');
+    allPhotos = [];
+    cameras = new Set();
+    let skippedCount = 0;
+    let page = 0;
+    
+    while (page < 25) { // Limit to 25 pages for testing
+        showLoading(`Loading photos (page ${page + 1})...`);
+        
+        const response = await fetch(
+            `${CONFIG.apiBaseUrl}/photos?size=100&page=${page}&includeWeatherData=true`,
+            { headers: { 'Authorization': `Bearer ${accessToken}` } }
+        );
+        const data = await response.json();
+        
+        if (!data.response || !data.response.photos || data.response.photos.length === 0) break;
+        
+        for (const photo of data.response.photos) {
+            const photoDate = photo.photoDateUtc || photo.photoDate;
+            if (!photoDate) { skippedCount++; continue; }
+            if (photo.cameraName) cameras.add(photo.cameraName);
+            allPhotos.push(photo);
+        }
+        page++;
+    }
+    
+    // Populate camera filter
+    populateCameraFilter();
+    
+    console.log(`Loaded ${allPhotos.length} photos${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`);
+    
+    // Debug: check sample photos with tags
+    const taggedPhotos = allPhotos.filter(p => p.tagIds && p.tagIds.length > 0);
+    console.log('Photos with tags:', taggedPhotos.length);
+    if (taggedPhotos.length > 0) {
+        console.log('Sample tagged photo:', taggedPhotos[0]);
+        console.log('Sample tagIds:', taggedPhotos[0].tagIds);
+    }
+    
+    applyFilters();
+    
+    // Sync all data to cache (in background)
+    if (isCacheEnabled()) {
+        showLoading('Syncing to cache...');
+        
+        // Sync tags
+        const tags = Object.entries(tagsLookup).map(([name, tagId]) => ({ tagId, name }));
+        await syncTagsToCache(tags);
+        
+        // Sync galleries
+        await syncGalleriesToCache(galleries);
+        
+        // Sync photos in batches
+        const batchSize = 200;
+        for (let i = 0; i < allPhotos.length; i += batchSize) {
+            showLoading(`Syncing photos to cache (${Math.min(i + batchSize, allPhotos.length)}/${allPhotos.length})...`);
+            const batch = allPhotos.slice(i, i + batchSize);
+            await syncPhotosToCache(batch);
+        }
+        
+        console.log('Cache sync complete');
+    }
+    
+    hideLoading();
+}
+
+function populateCameraFilter() {
+    const cameraSelect = document.getElementById('cameraFilter');
+    cameraSelect.innerHTML = '<option value="">All Cameras</option>';
+    Array.from(cameras).sort().forEach(cam => {
+        cameraSelect.innerHTML += `<option value="${cam}">${cam}</option>`;
+    });
+}
+
+async function refreshPhotos() {
+    showLoading('Checking for new photos...');
+    const existingIds = new Set(allPhotos.map(p => p.photoId));
+    let newCount = 0, page = 0;
+    
+    while (true) {
+        const response = await fetch(
+            `${CONFIG.apiBaseUrl}/photos?size=100&page=${page}&includeWeatherData=true`,
+            { headers: { 'Authorization': `Bearer ${accessToken}` } }
+        );
+        const data = await response.json();
+        if (!data.response || !data.response.photos || data.response.photos.length === 0) break;
+        
+        let foundExisting = false;
+        for (const photo of data.response.photos) {
+            if (existingIds.has(photo.photoId)) { foundExisting = true; continue; }
+            if (!photo.photoDateUtc && !photo.photoDate) continue;
+            if (photo.cameraName) cameras.add(photo.cameraName);
+            allPhotos.unshift(photo);
+            newCount++;
+        }
+        if (foundExisting) break;
+        page++;
+    }
+    
+    await loadGalleries();
+    applyFilters();
+    
+    hideLoading();
+    console.log(newCount > 0 ? `Added ${newCount} new photos` : 'No new photos');
+}
+
+// ============== FILTERS ==============
+function applyFilters() {
+    const galleryFilter = document.getElementById('galleryFilter').value;
+    const tagFilter = document.getElementById('tagFilter').value;
+    const cameraFilter = document.getElementById('cameraFilter').value;
+    
+    filteredPhotos = allPhotos.filter(photo => {
+        if (galleryFilter && (!photo.photoGroupIds || !photo.photoGroupIds.includes(galleryFilter))) return false;
+        if (cameraFilter && photo.cameraName !== cameraFilter) return false;
+        if (tagFilter === 'untagged') {
+            if (photo.tagIds && photo.tagIds.length > 0) return false;
+        } else if (tagFilter) {
+            const tagId = tagsLookup[tagFilter];
+            if (!tagId || !photo.tagIds || !photo.tagIds.includes(tagId)) return false;
+        }
+        return true;
+    });
+    
+    currentIndex = 0;
+    if (currentView === 'grid') {
+        gridDisplayCount = 50;
+        renderGrid();
+    } else {
+        updateStats();
+        showCurrentPhoto();
+    }
+}
+
+// ============== PHOTO DISPLAY ==============
+function showCurrentPhoto() {
+    const container = document.getElementById('photoContainer');
+    const complete = document.getElementById('completeMessage');
+    
+    if (currentView === 'grid') return;
+    
+    if (filteredPhotos.length === 0) {
+        container.style.display = 'none';
+        complete.style.display = 'block';
+        return;
+    }
+    
+    container.style.display = 'block';
+    complete.style.display = 'none';
+    
+    const photo = filteredPhotos[currentIndex];
+    const photoDate = getPhotoDate(photo);
+    
+    // Gallery names
+    let galleryDisplay = '';
+    if (photo.photoGroupIds && photo.photoGroupIds.length > 0) {
+        const names = photo.photoGroupIds.map(id => groupsLookup[id]).filter(n => n).join(', ');
+        if (names) galleryDisplay = `<span><img src="https://png.pngtree.com/png-vector/20230729/ourmid/pngtree-whitetail-buck-vector-png-image_7006974.png" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;" />${names}</span>`;
+    }
+    
+    // Update tag dropdown
+    const tagName = photo.tagIds && photo.tagIds.length > 0 ? tagIdToName[photo.tagIds[0]] : null;
+    document.getElementById('tagDropdown').value = tagName || '';
+    
+    document.getElementById('photoInfo').innerHTML = `
+        <span><i class="bi bi-camera me-1"></i>${photo.cameraName || 'Unknown'}</span>
+        <span><i class="bi bi-geo-alt me-1"></i>${photo.cameraLocation || ''}</span>
+        <span><i class="bi bi-calendar me-1"></i>${formatDate(photoDate)}</span>
+        <span><i class="bi bi-clock me-1"></i>${formatTime(photoDate)}</span>
+        ${galleryDisplay}
+    `;
+    
+    document.getElementById('photoImage').src = photo.photoUrl;
+    updateStats();
+}
+
+function updateStats() {
+    document.getElementById('currentPosition').textContent = filteredPhotos.length > 0 ? currentIndex + 1 : 0;
+    document.getElementById('totalCount').textContent = filteredPhotos.length;
+    const pct = filteredPhotos.length > 0 ? ((currentIndex + 1) / filteredPhotos.length) * 100 : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function getPhotoDate(photo) {
+    return photo.photoDateUtc || photo.photoDate || photo.createdAt || null;
+}
+
+function formatDate(utc) {
+    if (!utc) return '--';
+    return new Date(utc).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function formatTime(utc) {
+    if (!utc) return '--';
+    return new Date(utc).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function prevPhoto() { currentIndex = currentIndex <= 0 ? filteredPhotos.length - 1 : currentIndex - 1; showCurrentPhoto(); }
+function nextPhoto() { currentIndex = currentIndex >= filteredPhotos.length - 1 ? 0 : currentIndex + 1; showCurrentPhoto(); }
+
+// ============== VIEW TOGGLE ==============
+function toggleView() { setView(currentView === 'single' ? 'grid' : 'single'); }
+
+function setView(view) {
+    currentView = view;
+    document.getElementById('viewToggleBtn').innerHTML = view === 'single' 
+        ? '<i class="bi bi-grid-3x3-gap-fill me-1"></i>Grid View' 
+        : '<i class="bi bi-image me-1"></i>Single View';
+    document.getElementById('photoContainer').style.display = view === 'single' ? 'block' : 'none';
+    document.getElementById('gridContainer').style.display = view === 'grid' ? 'block' : 'none';
+    selectedPhotos.clear();
+    if (view === 'grid') { gridDisplayCount = 50; renderGrid(); updateBulkActionBar(); }
+    else { updateStats(); showCurrentPhoto(); }
+}
+
+// ============== GRID VIEW ==============
+function renderGrid() {
+    const grid = document.getElementById('photoGrid');
+    const loadMore = document.getElementById('gridLoadMore');
+    
+    if (filteredPhotos.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">No photos match filter.</div>';
+        loadMore.style.display = 'none';
+        return;
+    }
+    
+    grid.innerHTML = filteredPhotos.slice(0, gridDisplayCount).map(photo => {
+        const isSelected = selectedPhotos.has(photo.photoId);
+        const tagName = photo.tagIds && photo.tagIds.length > 0 ? tagIdToName[photo.tagIds[0]] || '' : 'Untagged';
+        const photoDate = getPhotoDate(photo);
+        
+        let galleryNames = [];
+        if (photo.photoGroupIds) {
+            photo.photoGroupIds.forEach(id => { if (groupsLookup[id]) galleryNames.push(groupsLookup[id]); });
+        }
+        const galleryDisplay = galleryNames.join(', ');
+        
+        return `
+            <div class="grid-item ${isSelected ? 'selected' : ''}" data-photo-id="${photo.photoId}" onclick="togglePhotoSelection('${photo.photoId}', event)">
+                <div class="grid-item-checkbox">${isSelected ? '✓' : ''}</div>
+                <img class="grid-item-img" src="${photo.photoUrl}" loading="lazy" />
+                <div class="grid-zoom-overlay" onclick="openZoomModal('${photo.photoUrl}', event)">Click to Zoom</div>
+                <div class="grid-item-info">
+                    <div class="camera">${photo.cameraName || 'Unknown'}</div>
+                    <div>${formatDate(photoDate)} ${formatTime(photoDate)}</div>
+                    <div>
+                        <span class="tag">${tagName}</span>
+                        ${galleryDisplay ? `<span class="gallery ms-2"><img class="gallery-icon" src="https://png.pngtree.com/png-vector/20230729/ourmid/pngtree-whitetail-buck-vector-png-image_7006974.png" /> ${galleryDisplay}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    loadMore.style.display = gridDisplayCount < filteredPhotos.length ? 'block' : 'none';
+}
+
+function loadMoreGridItems() { gridDisplayCount += 50; renderGrid(); }
+
+// ============== SELECTION ==============
+function togglePhotoSelection(id, e) {
+    if (e) e.stopPropagation();
+    selectedPhotos.has(id) ? selectedPhotos.delete(id) : selectedPhotos.add(id);
+    const item = document.querySelector(`[data-photo-id="${id}"]`);
+    if (item) {
+        item.classList.toggle('selected');
+        item.querySelector('.grid-item-checkbox').textContent = selectedPhotos.has(id) ? '✓' : '';
+    }
+    updateBulkActionBar();
+}
+
+function clearSelection() {
+    selectedPhotos.clear();
+    document.querySelectorAll('.grid-item.selected').forEach(el => {
+        el.classList.remove('selected');
+        el.querySelector('.grid-item-checkbox').textContent = '';
+    });
+    updateBulkActionBar();
+}
+
+function selectAll() {
+    filteredPhotos.slice(0, gridDisplayCount).forEach(p => selectedPhotos.add(p.photoId));
+    renderGrid();
+    updateBulkActionBar();
+}
+
+function selectUntagged() {
+    const untagged = filteredPhotos.slice(0, gridDisplayCount).filter(p => !p.tagIds || p.tagIds.length === 0);
+    const allSelected = untagged.length > 0 && untagged.every(p => selectedPhotos.has(p.photoId));
+    if (allSelected) clearSelection();
+    else { untagged.forEach(p => selectedPhotos.add(p.photoId)); renderGrid(); updateBulkActionBar(); }
+}
+
+function toggleSelectAll() {
+    const visible = Math.min(gridDisplayCount, filteredPhotos.length);
+    selectedPhotos.size >= visible && visible > 0 ? clearSelection() : selectAll();
+}
+
+function updateBulkActionBar() {
+    const count = selectedPhotos.size;
+    const visible = Math.min(gridDisplayCount, filteredPhotos.length);
+    const allSelected = count >= visible && visible > 0;
+    const untagged = filteredPhotos.slice(0, gridDisplayCount).filter(p => !p.tagIds || p.tagIds.length === 0);
+    const allUntaggedSelected = untagged.length > 0 && untagged.every(p => selectedPhotos.has(p.photoId));
+    
+    document.getElementById('gridSelectedCount').textContent = count > 0 ? `${count} selected` : 'None selected';
+    const toggleBtn = document.getElementById('selectToggleBtn');
+    toggleBtn.textContent = allSelected ? 'Clear All' : 'Select All';
+    toggleBtn.className = allSelected ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm';
+    const untaggedBtn = document.getElementById('selectUntaggedBtn');
+    untaggedBtn.textContent = allUntaggedSelected ? 'Clear' : 'Select Untagged';
+    untaggedBtn.className = allUntaggedSelected ? 'btn btn-secondary btn-sm' : 'btn btn-warning btn-sm';
+}
+
+// ============== TAGGING ==============
+async function tagPhoto(tagName) {
+    const isClearing = tagName === '__none__';
+    const tagId = isClearing ? null : tagsLookup[tagName];
+    if (!isClearing && !tagId) return;
+    if (filteredPhotos.length === 0) return;
+    
+    const photo = filteredPhotos[currentIndex];
+    showLoading(isClearing ? 'Clearing tag...' : `Tagging as ${tagName}...`);
+    
+    try {
+        const newTagIds = isClearing ? [] : [tagId];
+        const response = await fetch(`${CONFIG.apiBaseUrl}/photos/${photo.photoId}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tagIds: newTagIds })
+        });
+        
+        if (response.ok) {
+            photo.tagIds = newTagIds;
+            const idx = allPhotos.findIndex(p => p.photoId === photo.photoId);
+            if (idx !== -1) allPhotos[idx].tagIds = newTagIds;
+            showCurrentPhoto();
+            
+            // Sync to cache
+            updatePhotoCacheAfterTagChange(photo.photoId, newTagIds);
+        }
+    } catch (e) { alert('Error: ' + e.message); }
+    hideLoading();
+}
+
+function tagFromDropdown() {
+    const val = document.getElementById('tagDropdown').value;
+    if (val) tagPhoto(val);
+}
+
+function bulkTagFromDropdown() {
+    const val = document.getElementById('bulkTagDropdown').value;
+    if (val && selectedPhotos.size > 0) { bulkTagPhotos(val); document.getElementById('bulkTagDropdown').value = ''; }
+}
+
+async function bulkTagPhotos(tagName) {
+    const isClearing = tagName === '__none__';
+    const tagId = isClearing ? null : tagsLookup[tagName];
+    if (!isClearing && !tagId) return;
+    
+    const newTagIds = isClearing ? [] : [tagId];
+    showLoading(`Tagging ${selectedPhotos.size} photos...`);
+    for (const photoId of selectedPhotos) {
+        try {
+            await fetch(`${CONFIG.apiBaseUrl}/photos/${photoId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tagIds: newTagIds })
+            });
+            const photo = allPhotos.find(p => p.photoId === photoId);
+            if (photo) photo.tagIds = newTagIds;
+            
+            // Sync to cache
+            updatePhotoCacheAfterTagChange(photoId, newTagIds);
+        } catch (e) {}
+    }
+    hideLoading();
+    clearSelection();
+    renderGrid();
+    
+}
+
+// ============== GALLERIES ==============
+function populateGalleryGrids() {
+    const html = galleries.length === 0 
+        ? '<div class="col-12 text-muted text-center">No galleries available.</div>'
+        : galleries.map(g => `
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="card h-100" style="cursor:pointer;" onclick="selectGalleryFromModal('${g.photoGroupId}')">
+                    ${g.photoUrl ? `<img src="${g.photoUrl}" class="card-img-top" style="height:100px;object-fit:cover;">` : `<div class="card-img-top d-flex align-items-center justify-content-center" style="height:100px;background:#333;"><i class="bi bi-folder text-muted" style="font-size:2rem;"></i></div>`}
+                    <div class="card-body py-2">
+                        <div class="card-title mb-0 small">${g.name}</div>
+                        <small class="text-muted">${g.count} photos</small>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    document.getElementById('galleryGrid').innerHTML = html;
+    document.getElementById('bulkGalleryGrid').innerHTML = html.replace(/selectGalleryFromModal/g, 'bulkAddToGallery');
+}
+
+function openGalleryModal() { if (filteredPhotos.length > 0) galleryModalInstance.show(); }
+function openBulkGalleryModal() { if (selectedPhotos.size > 0) bulkGalleryModalInstance.show(); }
+
+async function selectGalleryFromModal(galleryId) {
+    const photo = filteredPhotos[currentIndex];
+    galleryModalInstance.hide();
+    showLoading('Adding to gallery...');
+    try {
+        await fetch(`${CONFIG.apiBaseUrl}/photoGroups/${galleryId}/batchAdd`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photoIds: [photo.photoId] })
+        });
+        if (!photo.photoGroupIds) photo.photoGroupIds = [];
+        if (!photo.photoGroupIds.includes(galleryId)) photo.photoGroupIds.push(galleryId);
+        await loadGalleries();
+        showCurrentPhoto();
+        
+        // Sync to cache
+        updatePhotoCacheAfterGalleryChange(photo.photoId, photo.photoGroupIds);
+    } catch (e) { alert('Error: ' + e.message); }
+    hideLoading();
+}
+
+async function bulkAddToGallery(galleryId) {
+    bulkGalleryModalInstance.hide();
+    showLoading(`Adding ${selectedPhotos.size} photos to gallery...`);
+    try {
+        await fetch(`${CONFIG.apiBaseUrl}/photoGroups/${galleryId}/batchAdd`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photoIds: Array.from(selectedPhotos) })
+        });
+        for (const id of selectedPhotos) {
+            const photo = allPhotos.find(p => p.photoId === id);
+            if (photo) {
+                if (!photo.photoGroupIds) photo.photoGroupIds = [];
+                if (!photo.photoGroupIds.includes(galleryId)) photo.photoGroupIds.push(galleryId);
+                
+                // Sync to cache
+                updatePhotoCacheAfterGalleryChange(id, photo.photoGroupIds);
+            }
+        }
+        await loadGalleries();
+        clearSelection();
+        renderGrid();
+    } catch (e) { alert('Error: ' + e.message); }
+    hideLoading();
+}
+
+// ============== DELETE ==============
+function openDeleteModal() { if (filteredPhotos.length > 0) deleteModalInstance.show(); }
+function openBulkDeleteModal() { if (selectedPhotos.size > 0) { document.getElementById('bulkDeleteCount').textContent = selectedPhotos.size; bulkDeleteModalInstance.show(); } }
+
+async function confirmDelete() {
+    deleteModalInstance.hide();
+    const photo = filteredPhotos[currentIndex];
+    showLoading('Deleting...');
+    try {
+        await fetch(`${CONFIG.apiBaseUrl}/photos/${photo.photoId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${accessToken}` } });
+        const idx = allPhotos.findIndex(p => p.photoId === photo.photoId);
+        if (idx !== -1) allPhotos.splice(idx, 1);
+        filteredPhotos.splice(currentIndex, 1);
+        if (currentIndex >= filteredPhotos.length) currentIndex = Math.max(0, filteredPhotos.length - 1);
+        await loadGalleries();
+        showCurrentPhoto();
+        
+        // Sync to cache
+        deletePhotoFromCache(photo.photoId);
+    } catch (e) { alert('Error: ' + e.message); }
+    hideLoading();
+}
+
+async function confirmBulkDelete() {
+    bulkDeleteModalInstance.hide();
+    const photoIds = Array.from(selectedPhotos);
+    showLoading(`Deleting ${photoIds.length} photos...`);
+    
+    for (const id of photoIds) {
+        try {
+            await fetch(`${CONFIG.apiBaseUrl}/photos/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${accessToken}` } });
+            const idx = allPhotos.findIndex(p => p.photoId === id);
+            if (idx !== -1) allPhotos.splice(idx, 1);
+        } catch (e) {}
+    }
+    
+    // Bulk sync to cache
+    deletePhotosFromCache(photoIds);
+    
+    hideLoading();
+    clearSelection();
+    applyFilters();
+}
+
+// ============== ZOOM ==============
+function openZoomModal(url, e) { e.stopPropagation(); document.getElementById('zoomImage').src = url; document.getElementById('zoomModal').style.display = 'flex'; }
+function closeZoomModal() { document.getElementById('zoomModal').style.display = 'none'; }
+
+// ============== DASHBOARD ==============
+
+// Store processed photos for filtering
+let dashboardPhotos = [];
+
+function populateDashboardFilters() {
+    const cameras = new Set();
+    const locations = new Set();
+    const names = new Set();
+    
+    dashboardPhotos.forEach(photo => {
+        if (photo.camera) cameras.add(photo.camera);
+        if (photo.location) locations.add(photo.location);
+        if (photo.name) {
+            photo.name.split(', ').forEach(n => { if (n) names.add(n); });
+        }
+    });
+    
+    const cameraSelect = document.getElementById('dashCameraFilter');
+    cameraSelect.innerHTML = '<option value="">All Cameras</option>';
+    Array.from(cameras).sort().forEach(cam => {
+        cameraSelect.innerHTML += `<option value="${cam}">${cam}</option>`;
+    });
+    
+    const locationSelect = document.getElementById('dashLocationFilter');
+    locationSelect.innerHTML = '<option value="">All Locations</option>';
+    Array.from(locations).sort().forEach(loc => {
+        locationSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
+    });
+    
+    const nameSelect = document.getElementById('dashNameFilter');
+    nameSelect.innerHTML = '<option value="">All Names</option>';
+    Array.from(names).sort().forEach(name => {
+        nameSelect.innerHTML += `<option value="${name}">${name}</option>`;
+    });
+}
+
+function applyDashboardFilters() {
+    const cameraFilter = document.getElementById('dashCameraFilter').value;
+    const locationFilter = document.getElementById('dashLocationFilter').value;
+    const nameFilter = document.getElementById('dashNameFilter').value;
+    const tagFilter = document.getElementById('dashTagFilter').value;
+    
+    // Map tag filter value to animalType
+    const tagToType = {
+        'Buck': 'buck', 'Doe': 'doe', 'Turkey': 'turkey', 'Bear': 'bear',
+        'Predator': 'predator', 'Bird': 'bird', 'Human': 'human',
+        'Vehicle/ATV': 'vehicle', 'Other': 'other_tagged', 'No Animals': 'no_animals'
+    };
+    const filterType = tagFilter ? tagToType[tagFilter] : null;
+    
+    // Build filtered arrays for each tag type
+    const filteredArrays = {};
+    
+    dashboardPhotos.forEach(photo => {
+        if (cameraFilter && photo.camera !== cameraFilter) return;
+        if (locationFilter && photo.location !== locationFilter) return;
+        if (nameFilter && (!photo.name || !photo.name.includes(nameFilter))) return;
+        if (filterType && photo.animalType !== filterType) return;
+        
+        const point = {
+            x: photo.dateMs,
+            y: photo.timeMs,
+            camera: photo.camera,
+            label: photo.name,
+            photoId: photo.photoId,
+            photoUrl: photo.photoUrl,
+            windSpeed: photo.windSpeed,
+            windDirection: photo.windDirection
+        };
+        
+        if (!filteredArrays[photo.animalType]) {
+            filteredArrays[photo.animalType] = [];
+        }
+        filteredArrays[photo.animalType].push(point);
+    });
+    
+    // Update chart series by name
+    const chart = Highcharts.charts.find(c => c && c.renderTo && c.renderTo.id === 'chart_main');
+    if (chart) {
+        Object.keys(tagConfig).forEach(tagType => {
+            const config = tagConfig[tagType];
+            const series = chart.series.find(s => s.name === config.name);
+            if (series) {
+                series.setData(filteredArrays[tagType] || [], false);
+            }
+        });
+        chart.redraw();
+    }
+    
+    // Update polar chart with filtered doe/buck data
+    updatePolarChartFiltered(filteredArrays['doe'] || [], filteredArrays['buck'] || []);
+    
+    // Update weather chart with filtered data
+    updateWeatherChart();
+}
+
+function clearDashboardFilters() {
+    document.getElementById('dashCameraFilter').value = '';
+    document.getElementById('dashLocationFilter').value = '';
+    document.getElementById('dashNameFilter').value = '';
+    document.getElementById('dashTagFilter').value = '';
+    applyDashboardFilters();
+}
+
+async function initializeDashboard() {
+    console.log('initializeDashboard called');
+    showLoading('Building dashboard...');
+    dashboardInitialized = true;
+    
+    // Process photos for chart
+    await processPhotosForChart();
+    
+    console.log('Chart arrays:', Object.keys(tagArrays).map(t => `${t}: ${tagArrays[t].length}`).join(', '));
+    console.log('Sun arrays - Sunrise:', sunriseArray.length, 'Moon:', moonArray.length);
+    
+    createMainChart();
+    createPolarChart();
+    createWeatherChart();
+    loadForecast();
+    
+    hideLoading();
+}
+
+function convertToEST(photoDateUtc) {
+    if (!photoDateUtc || !photoDateUtc.includes('T')) return null;
+    const [datePart, timePart] = photoDateUtc.replace('Z', '').split('T');
+    const fullDateTime = new Date(datePart + 'T' + timePart + 'Z');
+    const estDateTime = new Date(fullDateTime.getTime() + (CONFIG.timezoneOffset * 60 * 60 * 1000));
+    
+    const year = estDateTime.getUTCFullYear();
+    const month = String(estDateTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(estDateTime.getUTCDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    const hours = estDateTime.getUTCHours();
+    const minutes = estDateTime.getUTCMinutes();
+    const seconds = estDateTime.getUTCSeconds();
+    const timeMs = ((hours * 3600) + (minutes * 60) + seconds) * 1000;
+    const dateMs = new Date(dateStr + 'T00:00:00').getTime();
+    
+    return { dateStr, timeMs, dateMs };
+}
+
+function timeToMs(timeStr) {
+    if (!timeStr) return -1;
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return -1;
+    return ((parseInt(parts[0]) * 3600) + (parseInt(parts[1]) * 60) + (parts[2] ? parseInt(parts[2]) : 0)) * 1000;
+}
+
+function calculateMoonPhase(dateStr) {
+    const knownNewMoon = new Date(2000, 0, 6);
+    const targetDate = new Date(dateStr);
+    const lunarCycle = 29.53059;
+    let phase = ((targetDate - knownNewMoon) / (1000 * 60 * 60 * 24) % lunarCycle) / lunarCycle;
+    return phase < 0 ? phase + 1 : phase;
+}
+
+function getMoonPhaseName(phase) {
+    if (phase < 0.0625) return 'New Moon';
+    if (phase < 0.1875) return 'Waxing Crescent';
+    if (phase < 0.3125) return 'First Quarter';
+    if (phase < 0.4375) return 'Waxing Gibbous';
+    if (phase < 0.5625) return 'Full Moon';
+    if (phase < 0.6875) return 'Waning Gibbous';
+    if (phase < 0.8125) return 'Last Quarter';
+    if (phase < 0.9375) return 'Waning Crescent';
+    return 'New Moon';
+}
+
+function getMoonSymbol(phase) {
+    if (phase < 0.0625) return '🌑';
+    if (phase < 0.1875) return '🌒';
+    if (phase < 0.3125) return '🌓';
+    if (phase < 0.4375) return '🌔';
+    if (phase < 0.5625) return '🌕';
+    if (phase < 0.6875) return '🌖';
+    if (phase < 0.8125) return '🌗';
+    if (phase < 0.9375) return '🌘';
+    return '🌑';
+}
+
+async function prefetchSunData() {
+    showLoading('Fetching astronomical data...');
+    
+    // Collect unique dates from photos
+    const uniqueDates = new Set();
+    for (const photo of allPhotos) {
+        if (!photo.photoDateUtc || !photo.photoDateUtc.includes('T')) continue;
+        const converted = convertToEST(photo.photoDateUtc);
+        if (converted) {
+            uniqueDates.add(converted.dateStr);
+        }
+    }
+    
+    // Only fetch dates not already in cache
+    const datesToFetch = Array.from(uniqueDates).filter(d => !sunData[d]).slice(0, 60);
+    
+    if (datesToFetch.length === 0) {
+        console.log('All sun data already cached');
+        return;
+    }
+    
+    let count = 0;
+    const newSunData = {};
+    
+    for (const dateStr of datesToFetch) {
+        count++;
+        showLoading(`Fetching sun data (${count}/${datesToFetch.length})...`);
+        await getSunData(dateStr);
+        
+        // Track newly fetched data for cache sync
+        if (sunData[dateStr]) {
+            newSunData[dateStr] = sunData[dateStr];
+        }
+    }
+    
+    console.log('Pre-fetched sun data for', datesToFetch.length, 'dates');
+    
+    // Sync new sun data to cache
+    if (Object.keys(newSunData).length > 0) {
+        await syncSunDataToCache(newSunData);
+    }
+}
+
+async function processPhotosForPrediction() {
+    showLoading('Processing photos for prediction...');
+    
+    // Build dashboardPhotos array for prediction calculations
+    dashboardPhotos = [];
+    
+    for (const photo of allPhotos) {
+        const converted = convertToEST(photo.photoDateUtc);
+        if (!converted) continue;
+        
+        const tagNames = (photo.tagIds || []).map(id => tagIdToName[id]).filter(n => n);
+        let animalType = 'other';
+        if (tagNames.includes('Buck')) animalType = 'buck';
+        else if (tagNames.includes('Doe')) animalType = 'doe';
+        else if (tagNames.includes('Turkey')) animalType = 'turkey';
+        else if (tagNames.includes('Bear')) animalType = 'bear';
+        else if (tagNames.includes('Predator')) animalType = 'predator';
+        else if (tagNames.includes('Bird')) animalType = 'bird';
+        else if (tagNames.includes('Human')) animalType = 'human';
+        else if (tagNames.includes('Vehicle/ATV')) animalType = 'vehicle';
+        else if (tagNames.includes('Other')) animalType = 'other_tagged';
+        else if (tagNames.includes('No Animals')) animalType = 'no_animals';
+        
+        if (animalType === 'other') continue;
+        
+        const processedPhoto = {
+            ...converted,
+            photoId: photo.photoId,
+            photoUrl: photo.photoUrl,
+            camera: photo.cameraName,
+            location: photo.cameraLocation || '',
+            name: (photo.photoGroupIds || []).map(id => groupsLookup[id]).filter(n => n).join(', '),
+            animalType,
+            windSpeed: photo.weatherRecord?.windDirection?.speed ?? '',
+            windDirection: photo.weatherRecord?.windDirection?.degrees ?? '',
+            tempMin: photo.weatherRecord?.temperatureRange12Hours?.min ?? '',
+            tempMax: photo.weatherRecord?.temperatureRange12Hours?.max ?? '',
+            barometricPressure: photo.weatherRecord?.barometricPressure ?? ''
+        };
+        
+        dashboardPhotos.push(processedPhoto);
+    }
+    
+    console.log('Processed', dashboardPhotos.length, 'photos for prediction');
+}
+
+async function prefetchForecast() {
+    showLoading('Fetching forecast data...');
+    
+    try {
+        const lat = CONFIG.fixedLat;
+        const lng = CONFIG.fixedLng;
+        
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant&hourly=surface_pressure&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,precipitation&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FNew_York&forecast_days=10`;
+        
+        const response = await fetch(url);
+        
+        if (response.ok) {
+            cachedForecastData = await response.json();
+            console.log('Pre-fetched forecast data');
+            
+            // Process forecast days for prediction chart
+            if (cachedForecastData.daily && cachedForecastData.daily.time) {
+                const dailyPressure = [];
+                if (cachedForecastData.hourly && cachedForecastData.hourly.surface_pressure) {
+                    for (let d = 0; d < cachedForecastData.daily.time.length; d++) {
+                        const dayStart = d * 24;
+                        const dayPressures = cachedForecastData.hourly.surface_pressure.slice(dayStart, dayStart + 24);
+                        const avgPressure = dayPressures.reduce((a, b) => a + b, 0) / dayPressures.length;
+                        dailyPressure.push((avgPressure / 33.864).toFixed(2));
+                    }
+                }
+                
+                forecastDays = cachedForecastData.daily.time.map((date, i) => ({
+                    datetime: date,
+                    tempmax: cachedForecastData.daily.temperature_2m_max[i],
+                    tempmin: cachedForecastData.daily.temperature_2m_min[i],
+                    windspeed: cachedForecastData.daily.wind_speed_10m_max[i],
+                    winddir: cachedForecastData.daily.wind_direction_10m_dominant[i],
+                    precipprob: cachedForecastData.daily.precipitation_probability_max[i],
+                    pressure: dailyPressure[i] || null,
+                    moonphase: calculateMoonPhase(date)
+                }));
+                
+                // Prediction chart will be created when Dashboard tab is opened
+            }
+        }
+    } catch (error) {
+        console.error('Error pre-fetching forecast:', error);
+    }
+}
+
+function getWindDirection(degrees) {
+    if (degrees === '' || degrees === null || degrees === undefined) return '';
+    const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    return dirs[Math.round(degrees / 22.5) % 16];
+}
+
+async function getSunData(dateStr) {
+    if (sunData[dateStr]) return sunData[dateStr];
+    
+    try {
+        const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${CONFIG.fixedLat},${CONFIG.fixedLng}/${dateStr}?unitGroup=us&key=${CONFIG.visualCrossingApiKey}&include=days&elements=datetime,sunrise,sunset,moonphase`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.days && data.days[0]) {
+            const day = data.days[0];
+            sunData[dateStr] = {
+                sunrise: timeToMs(day.sunrise),
+                sunset: timeToMs(day.sunset),
+                moonphase: day.moonphase || calculateMoonPhase(dateStr)
+            };
+        } else {
+            sunData[dateStr] = { sunrise: timeToMs('07:00:00'), sunset: timeToMs('18:00:00'), moonphase: calculateMoonPhase(dateStr) };
+        }
+    } catch (e) {
+        sunData[dateStr] = { sunrise: timeToMs('07:00:00'), sunset: timeToMs('18:00:00'), moonphase: calculateMoonPhase(dateStr) };
+    }
+    return sunData[dateStr];
+}
+
+async function processPhotosForChart() {
+    console.log('processPhotosForChart called, allPhotos:', allPhotos.length);
+    
+    sunriseArray = []; sunsetArray = []; moonArray = [];
+    tagArrays = {};
+    dashboardPhotos = [];
+    
+    const uniqueDates = new Set();
+    
+    // First pass - collect dates and convert photos
+    for (const photo of allPhotos) {
+        const converted = convertToEST(photo.photoDateUtc);
+        if (!converted) continue;
+        
+        const tagNames = (photo.tagIds || []).map(id => tagIdToName[id]).filter(n => n);
+        let animalType = 'other';
+        if (tagNames.includes('Buck')) animalType = 'buck';
+        else if (tagNames.includes('Doe')) animalType = 'doe';
+        else if (tagNames.includes('Turkey')) animalType = 'turkey';
+        else if (tagNames.includes('Bear')) animalType = 'bear';
+        else if (tagNames.includes('Predator')) animalType = 'predator';
+        else if (tagNames.includes('Bird')) animalType = 'bird';
+        else if (tagNames.includes('Human')) animalType = 'human';
+        else if (tagNames.includes('Vehicle/ATV')) animalType = 'vehicle';
+        else if (tagNames.includes('Other')) animalType = 'other_tagged';
+        else if (tagNames.includes('No Animals')) animalType = 'no_animals';
+        
+        if (animalType === 'other') continue; // Only chart tagged items
+        
+        uniqueDates.add(converted.dateStr);
+        
+        const processedPhoto = {
+            ...converted,
+            photoId: photo.photoId,
+            photoUrl: photo.photoUrl,
+            camera: photo.cameraName,
+            location: photo.cameraLocation || '',
+            name: (photo.photoGroupIds || []).map(id => groupsLookup[id]).filter(n => n).join(', '),
+            animalType,
+            windSpeed: photo.weatherRecord?.windDirection?.speed ?? '',
+            windDirection: photo.weatherRecord?.windDirection?.degrees ?? '',
+            tempMin: photo.weatherRecord?.temperatureRange12Hours?.min ?? '',
+            tempMax: photo.weatherRecord?.temperatureRange12Hours?.max ?? '',
+            barometricPressure: photo.weatherRecord?.barometricPressure ?? ''
+        };
+        
+        dashboardPhotos.push(processedPhoto);
+    }
+    
+    console.log('Processed photos for chart:', dashboardPhotos.length);
+    console.log('Unique dates:', uniqueDates.size);
+    
+    // Sun data already prefetched at login, just ensure any missing dates are fetched
+    const datesToFetch = Array.from(uniqueDates).filter(d => !sunData[d]).slice(0, 60);
+    if (datesToFetch.length > 0) {
+        let count = 0;
+        for (const dateStr of datesToFetch) {
+            count++;
+            showLoading(`Fetching sun data (${count}/${datesToFetch.length})...`);
+            await getSunData(dateStr);
+        }
+    }
+    
+    // Build chart arrays - only for tags that exist
+    dashboardPhotos.forEach(photo => {
+        const point = {
+            x: photo.dateMs,
+            y: photo.timeMs,
+            camera: photo.camera,
+            label: photo.name,
+            photoId: photo.photoId,
+            photoUrl: photo.photoUrl,
+            windSpeed: photo.windSpeed,
+            windDirection: photo.windDirection
+        };
+        
+        if (!tagArrays[photo.animalType]) {
+            tagArrays[photo.animalType] = [];
+        }
+        tagArrays[photo.animalType].push(point);
+    });
+    
+    // Build sun arrays
+    Array.from(uniqueDates).sort().forEach(dateStr => {
+        const dateMs = new Date(dateStr + 'T12:00:00').getTime();
+        const sun = sunData[dateStr];
+        if (sun) {
+            sunriseArray.push({ x: dateMs, y: sun.sunrise });
+            sunsetArray.push({ x: dateMs, y: sun.sunset });
+            moonArray.push({ x: dateMs, y: 0.5, moonphase: sun.moonphase, moonlabel: getMoonPhaseName(sun.moonphase), moonsymbol: getMoonSymbol(sun.moonphase) });
+        }
+    });
+    
+    console.log('Tag arrays created:', Object.keys(tagArrays));
+    Object.keys(tagArrays).forEach(t => console.log(`  ${t}: ${tagArrays[t].length}`));
+    
+    // Populate filter dropdowns
+    populateDashboardFilters();
+}
+
+function createMainChart() {
+    console.log('createMainChart called');
+    const container = document.getElementById('chart_main');
+    console.log('chart_main container:', container);
+    
+    if (!container) {
+        console.error('chart_main container not found!');
+        return;
+    }
+    
+    // Build dynamic series from tagArrays
+    const baseSeries = [{
+        type: 'area', name: 'Night (AM)', data: sunriseArray, threshold: 0, color: 'rgba(50, 50, 80, 0.6)', lineWidth: 0, enableMouseTracking: false, showInLegend: false
+    }, {
+        type: 'area', name: 'Night (PM)', data: sunsetArray, threshold: 24 * 60 * 60 * 1000, color: 'rgba(50, 50, 80, 0.6)', lineWidth: 0, enableMouseTracking: false, showInLegend: false
+    }, {
+        type: 'scatter', name: 'Moon', data: moonArray, yAxis: 1, marker: { enabled: false },
+        dataLabels: { enabled: true, y: -15, formatter: function() { return this.point.moonsymbol; }, style: { fontSize: '18px', textOutline: 'none' } },
+        showInLegend: false, enableMouseTracking: false
+    }];
+    
+    // Add series for each tag type that has data
+    const tagSeries = Object.keys(tagArrays).map(tagType => {
+        const config = tagConfig[tagType] || { color: '#888', symbol: 'circle', radius: 4, name: tagType };
+        return {
+            type: 'scatter',
+            name: config.name,
+            data: tagArrays[tagType],
+            color: config.color,
+            marker: { radius: config.radius, symbol: config.symbol },
+            tooltip: { enabled: false }
+        };
+    });
+    
+    console.log('Creating chart with', tagSeries.length, 'tag series');
+    
+    try {
+        Highcharts.stockChart('chart_main', {
+        chart: {
+            backgroundColor: '#2a2a2b',
+            style: { fontFamily: "'Segoe UI', sans-serif" }
+        },
+        title: { text: 'Trail Observations', style: { color: '#E0E0E3', fontSize: '20px' } },
+        legend: { enabled: true, itemStyle: { color: '#E0E0E3' }, itemHoverStyle: { color: '#FFF' } },
+        rangeSelector: {
+            selected: 1,
+            buttons: [{ type: 'week', count: 1, text: '1w' }, { type: 'month', count: 1, text: '1m' }, { type: 'month', count: 3, text: '3m' }, { type: 'all', text: 'All' }],
+            inputEnabled: false,
+            buttonTheme: { fill: '#3e3e40', stroke: '#606063', style: { color: '#E0E0E3' }, states: { hover: { fill: '#4e4e50' }, select: { fill: '#1C86EE', style: { color: 'white' } } } }
+        },
+        navigator: { enabled: true, height: 30 },
+        xAxis: {
+            type: 'datetime',
+            gridLineWidth: 1,
+            gridLineColor: '#444',
+            labels: { style: { color: '#E0E0E3' }, formatter: function() { return Highcharts.dateFormat('%b %e', this.value); } }
+        },
+        yAxis: [{
+            type: 'datetime',
+            min: 0,
+            max: 24 * 60 * 60 * 1000,
+            tickInterval: 3 * 60 * 60 * 1000,
+            gridLineColor: '#444',
+            top: '8%',
+            height: '92%',
+            labels: { style: { color: '#E0E0E3' }, formatter: function() { return Highcharts.dateFormat('%l %P', this.value); } },
+            title: { enabled: false }
+        }, {
+            top: '0%', height: '6%', min: 0, max: 1, gridLineWidth: 0, labels: { enabled: false }, title: { enabled: false }
+        }],
+        tooltip: {
+            enabled: false  // Disable floating tooltip, we'll use the side panel
+        },
+        plotOptions: {
+            scatter: {
+                cursor: 'pointer',
+                point: {
+                    events: {
+                        mouseOver: function() {
+                            updateTooltipPanel(this);
+                        }
+                    }
+                }
+            }
+        },
+        series: [...baseSeries, ...tagSeries],
+        credits: { enabled: false }
+    });
+    console.log('Main chart created successfully');
+    } catch (e) {
+        console.error('Error creating main chart:', e);
+    }
+}
+
+function createPolarChart() {
+    const doeData = tagArrays['doe'] || [];
+    const buckData = tagArrays['buck'] || [];
+    const { doeSegments, buckSegments } = calculateSunRelativeDistribution(doeData, buckData);
+    
+    Highcharts.chart('chart_polar', {
+        chart: {
+            polar: true,
+            type: 'column',
+            backgroundColor: 'transparent'
+        },
+        
+        title: {
+            text: 'Activity: Sunrise to Sunset',
+            style: { color: '#E0E0E3' }
+        },
+        
+        pane: {
+            startAngle: -90,
+            endAngle: 270,
+            background: [{
+                backgroundColor: 'rgba(255, 255, 200, 0.3)',
+                borderWidth: 0,
+                outerRadius: '100%',
+                innerRadius: '0%',
+                shape: 'arc',
+                from: 0,
+                to: 180
+            }, {
+                backgroundColor: 'rgba(50, 50, 80, 0.4)',
+                borderWidth: 0,
+                outerRadius: '100%',
+                innerRadius: '0%',
+                shape: 'arc',
+                from: 180,
+                to: 360
+            }]
+        },
+        
+        xAxis: {
+            tickInterval: 15,
+            min: 0,
+            max: 360,
+            labels: {
+                useHTML: true,
+                formatter: function() {
+                    const index = this.value / 15;
+                    if (index === 0) return '<b style="font-size:32px;">☀️</b>';
+                    if (index === 6) return '<b style="color:#E0E0E3;">Midday</b>';
+                    if (index === 12) return '<b style="font-size:32px;">☽</b>';
+                    if (index === 18) return '<b style="color:#E0E0E3;">Midnight</b>';
+                    return '';
+                },
+                style: { color: '#E0E0E3', fontSize: '12px' }
+            },
+            gridLineColor: '#444'
+        },
+        
+        yAxis: {
+            min: 0,
+            labels: { enabled: false },
+            gridLineColor: '#444'
+        },
+        
+        plotOptions: {
+            column: {
+                pointPadding: 0,
+                groupPadding: 0.1,
+                pointPlacement: 'between'
+            },
+            series: {
+                pointStart: 0,
+                pointInterval: 15
+            }
+        },
+        
+        legend: {
+            enabled: true,
+            itemStyle: { color: '#E0E0E3' }
+        },
+        
+        tooltip: {
+            shared: true,
+            formatter: function() {
+                const segment = Math.floor(this.points ? this.points[0].point.index : this.point.index);
+                let label;
+                if (segment < 12) {
+                    const hoursAfterSunrise = segment;
+                    if (hoursAfterSunrise === 0) label = '☀️ Sunrise';
+                    else label = `☀️ +${hoursAfterSunrise}/12`;
+                } else {
+                    const hoursAfterSunset = segment - 12;
+                    if (hoursAfterSunset === 0) label = '☽ Sunset';
+                    else label = `☽ +${hoursAfterSunset}/12`;
+                }
+                
+                const chart = this.points ? this.points[0].series.chart : this.series.chart;
+                const doeCount = chart.series[0].data[segment]?.y || 0;
+                const buckCount = chart.series[1].data[segment]?.y || 0;
+                const total = doeCount + buckCount;
+                
+                return `<b>${label}</b><br/>` +
+                       `<span style="color: #1C86EE;">●</span> Doe: <b>${doeCount}</b><br/>` +
+                       `<span style="color: #FF4444;">●</span> Buck: <b>${buckCount}</b><br/>` +
+                       `Total: <b>${total}</b>`;
+            }
+        },
+        
+        series: [{
+            name: 'Doe',
+            color: '#1C86EE',
+            data: doeSegments
+        }, {
+            name: 'Buck',
+            color: '#FF4444',
+            data: buckSegments
+        }],
+        
+        credits: { enabled: false }
+    });
+}
+
+function updatePolarChart() {
+    const doeData = tagArrays['doe'] || [];
+    const buckData = tagArrays['buck'] || [];
+    updatePolarChartFiltered(doeData, buckData);
+}
+
+function updatePolarChartFiltered(doeData, buckData) {
+    const { doeSegments, buckSegments } = calculateSunRelativeDistribution(doeData, buckData);
+    
+    const chart = Highcharts.charts.find(c => c && c.renderTo && c.renderTo.id === 'chart_polar');
+    if (chart) {
+        chart.series[0].setData(doeSegments, false);
+        chart.series[1].setData(buckSegments, false);
+        chart.redraw();
+    }
+}
+
+function calculateSunRelativeDistribution(doeData, buckData) {
+    const doeSegments = new Array(24).fill(0);
+    const buckSegments = new Array(24).fill(0);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    
+    function getSegment(timeMs, sunrise, sunset) {
+        if (!sunrise || !sunset || sunrise >= sunset) {
+            sunrise = 7 * 60 * 60 * 1000;
+            sunset = 18 * 60 * 60 * 1000;
+        }
+        
+        const dayLength = sunset - sunrise;
+        const nightLength = DAY_MS - dayLength;
+        
+        if (timeMs >= sunrise && timeMs < sunset) {
+            const positionInDay = (timeMs - sunrise) / dayLength;
+            return Math.min(11, Math.floor(positionInDay * 12));
+        } else {
+            let timeSinceSunset;
+            if (timeMs >= sunset) {
+                timeSinceSunset = timeMs - sunset;
+            } else {
+                timeSinceSunset = (DAY_MS - sunset) + timeMs;
+            }
+            const positionInNight = timeSinceSunset / nightLength;
+            return 12 + Math.min(11, Math.floor(positionInNight * 12));
+        }
+    }
+    
+    doeData.forEach(point => {
+        const photo = dashboardPhotos.find(p => p.photoId === point.photoId);
+        if (photo) {
+            const sun = sunData[photo.dateStr] || {};
+            const segment = getSegment(point.y, sun.sunrise, sun.sunset);
+            doeSegments[segment]++;
+        }
+    });
+    
+    buckData.forEach(point => {
+        const photo = dashboardPhotos.find(p => p.photoId === point.photoId);
+        if (photo) {
+            const sun = sunData[photo.dateStr] || {};
+            const segment = getSegment(point.y, sun.sunrise, sun.sunset);
+            buckSegments[segment]++;
+        }
+    });
+    
+    return { doeSegments, buckSegments };
+}
+
+function createWeatherChart() {
+    const field = document.getElementById('weatherField').value;
+    const { categories, dayCounts, nightCounts, title } = calculateWeatherDistribution(field);
+    
+    Highcharts.chart('chart_weather', {
+        chart: {
+            type: 'column',
+            backgroundColor: 'transparent'
+        },
+        
+        title: {
+            text: title,
+            style: { color: '#E0E0E3' }
+        },
+        
+        xAxis: {
+            categories: categories,
+            labels: {
+                style: { color: '#E0E0E3' },
+                rotation: categories.length > 10 ? -45 : 0
+            },
+            lineColor: '#555',
+            tickColor: '#555'
+        },
+        
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Photo Count',
+                style: { color: '#E0E0E3' }
+            },
+            labels: {
+                style: { color: '#E0E0E3' }
+            },
+            gridLineColor: '#444'
+        },
+        
+        legend: {
+            enabled: true,
+            itemStyle: { color: '#E0E0E3' },
+            itemHoverStyle: { color: '#fff' }
+        },
+        
+        tooltip: {
+            shared: true,
+            backgroundColor: 'rgba(40, 40, 40, 0.9)',
+            style: { color: '#E0E0E3' }
+        },
+        
+        plotOptions: {
+            column: {
+                grouping: true,
+                shadow: false,
+                borderWidth: 0
+            }
+        },
+        
+        series: [{
+            name: '☀️ Daytime',
+            color: '#F4D03F',
+            data: dayCounts
+        }, {
+            name: '🌙 Nighttime',
+            color: '#5D6D7E',
+            data: nightCounts
+        }],
+        
+        credits: { enabled: false }
+    });
+}
+
+function updateWeatherChart() {
+    const field = document.getElementById('weatherField').value;
+    const { categories, dayCounts, nightCounts, title } = calculateWeatherDistribution(field);
+    
+    const chart = Highcharts.charts.find(c => c && c.renderTo && c.renderTo.id === 'chart_weather');
+    if (chart) {
+        chart.setTitle({ text: title });
+        chart.xAxis[0].setCategories(categories);
+        chart.series[0].setData(dayCounts, false);
+        chart.series[1].setData(nightCounts, false);
+        chart.redraw();
+    }
+}
+
+function calculateWeatherDistribution(field) {
+    let categories, dayCounts, nightCounts, title;
+    
+    // Get current filter values
+    const cameraFilter = document.getElementById('dashCameraFilter')?.value || '';
+    const locationFilter = document.getElementById('dashLocationFilter')?.value || '';
+    const nameFilter = document.getElementById('dashNameFilter')?.value || '';
+    const tagFilter = document.getElementById('dashTagFilter')?.value || '';
+    
+    // Map tag filter to type
+    const tagToType = {
+        'Buck': 'buck', 'Doe': 'doe', 'Turkey': 'turkey', 'Bear': 'bear',
+        'Predator': 'predator', 'Bird': 'bird', 'Human': 'human',
+        'Vehicle/ATV': 'vehicle', 'Other': 'other_tagged', 'No Animals': 'no_animals'
+    };
+    const filterType = tagFilter ? tagToType[tagFilter] : null;
+    
+    // Filter photos based on current filters
+    const filteredPhotos = dashboardPhotos.filter(photo => {
+        if (cameraFilter && photo.camera !== cameraFilter) return false;
+        if (locationFilter && photo.location !== locationFilter) return false;
+        if (nameFilter && (!photo.name || !photo.name.includes(nameFilter))) return false;
+        if (filterType && photo.animalType !== filterType) return false;
+        return true;
+    });
+    
+    // Helper to determine if photo is daytime
+    function isDaytime(photo) {
+        const sun = sunData[photo.dateStr] || {};
+        if (!sun.sunrise || !sun.sunset) return true;
+        return photo.timeMs >= sun.sunrise && photo.timeMs < sun.sunset;
+    }
+    
+    switch (field) {
+        case 'windDirection':
+            categories = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            title = 'Photos by Wind Direction';
+            const dayWindDir = new Array(8).fill(0);
+            const nightWindDir = new Array(8).fill(0);
+            
+            filteredPhotos.forEach(photo => {
+                if (photo.windDirection === '' || photo.windDirection === null || photo.windDirection === undefined) return;
+                const idx = Math.round(photo.windDirection / 45) % 8;
+                if (isDaytime(photo)) dayWindDir[idx]++;
+                else nightWindDir[idx]++;
+            });
+            dayCounts = dayWindDir;
+            nightCounts = nightWindDir;
+            break;
+            
+        case 'windSpeed':
+            categories = ['0-3', '3-6', '6-9', '9-12', '12-15', '15+'];
+            title = 'Photos by Wind Speed (MPH)';
+            const dayWindSpd = new Array(6).fill(0);
+            const nightWindSpd = new Array(6).fill(0);
+            
+            filteredPhotos.forEach(photo => {
+                if (photo.windSpeed === '' || photo.windSpeed === null || photo.windSpeed === undefined) return;
+                const speed = parseFloat(photo.windSpeed);
+                let idx;
+                if (speed < 3) idx = 0;
+                else if (speed < 6) idx = 1;
+                else if (speed < 9) idx = 2;
+                else if (speed < 12) idx = 3;
+                else if (speed < 15) idx = 4;
+                else idx = 5;
+                if (isDaytime(photo)) dayWindSpd[idx]++;
+                else nightWindSpd[idx]++;
+            });
+            dayCounts = dayWindSpd;
+            nightCounts = nightWindSpd;
+            break;
+            
+        case 'temperature':
+            categories = ['<20°', '20-30°', '30-40°', '40-50°', '50-60°', '60-70°', '70-80°', '80-90°', '90+°'];
+            title = 'Photos by Temperature (°F)';
+            const dayTemp = new Array(9).fill(0);
+            const nightTemp = new Array(9).fill(0);
+            
+            filteredPhotos.forEach(photo => {
+                let temp = null;
+                if (photo.tempMin !== undefined && photo.tempMax !== undefined) {
+                    temp = (parseFloat(photo.tempMin) + parseFloat(photo.tempMax)) / 2;
+                } else if (photo.tempMin !== undefined) {
+                    temp = parseFloat(photo.tempMin);
+                } else if (photo.tempMax !== undefined) {
+                    temp = parseFloat(photo.tempMax);
+                }
+                if (temp === null || isNaN(temp)) return;
+                
+                let idx;
+                if (temp < 20) idx = 0;
+                else if (temp < 30) idx = 1;
+                else if (temp < 40) idx = 2;
+                else if (temp < 50) idx = 3;
+                else if (temp < 60) idx = 4;
+                else if (temp < 70) idx = 5;
+                else if (temp < 80) idx = 6;
+                else if (temp < 90) idx = 7;
+                else idx = 8;
+                if (isDaytime(photo)) dayTemp[idx]++;
+                else nightTemp[idx]++;
+            });
+            dayCounts = dayTemp;
+            nightCounts = nightTemp;
+            break;
+            
+        case 'pressure':
+            categories = ['<29.50', '29.50', '29.55', '29.60', '29.65', '29.70', '29.75', '29.80', '29.85', '29.90', '29.95', '30.00', '30.05', '30.10', '30.15', '30.20', '30.25', '30.30', '30.35', '30.40', '30.45', '≥30.50'];
+            title = 'Photos by Barometric Pressure (inHg)';
+            const dayPres = new Array(22).fill(0);
+            const nightPres = new Array(22).fill(0);
+            
+            filteredPhotos.forEach(photo => {
+                if (photo.barometricPressure === '' || photo.barometricPressure === null || photo.barometricPressure === undefined) return;
+                const pressure = parseFloat(photo.barometricPressure);
+                if (isNaN(pressure)) return;
+                let idx;
+                if (pressure < 29.50) idx = 0;
+                else if (pressure >= 30.50) idx = 21;
+                else idx = Math.floor((pressure - 29.50) / 0.05) + 1;
+                if (isDaytime(photo)) dayPres[idx]++;
+                else nightPres[idx]++;
+            });
+            dayCounts = dayPres;
+            nightCounts = nightPres;
+            break;
+            
+        case 'moonPhase':
+            categories = ['🌑 New', '🌒 Wax Cres', '🌓 1st Qtr', '🌔 Wax Gib', '🌕 Full', '🌖 Wan Gib', '🌗 3rd Qtr', '🌘 Wan Cres'];
+            title = 'Photos by Moon Phase';
+            const dayMoon = new Array(8).fill(0);
+            const nightMoon = new Array(8).fill(0);
+            
+            filteredPhotos.forEach(photo => {
+                const sun = sunData[photo.dateStr] || {};
+                if (sun.moonphase === '' || sun.moonphase === null || sun.moonphase === undefined) return;
+                const phase = parseFloat(sun.moonphase);
+                let idx;
+                if (phase < 0.0625) idx = 0;
+                else if (phase < 0.1875) idx = 1;
+                else if (phase < 0.3125) idx = 2;
+                else if (phase < 0.4375) idx = 3;
+                else if (phase < 0.5625) idx = 4;
+                else if (phase < 0.6875) idx = 5;
+                else if (phase < 0.8125) idx = 6;
+                else if (phase < 0.9375) idx = 7;
+                else idx = 0;
+                if (isDaytime(photo)) dayMoon[idx]++;
+                else nightMoon[idx]++;
+            });
+            dayCounts = dayMoon;
+            nightCounts = nightMoon;
+            break;
+            
+        default:
+            categories = [];
+            dayCounts = [];
+            nightCounts = [];
+            title = 'Weather Distribution';
+    }
+    
+    return { categories, dayCounts, nightCounts, title };
+}
+
+// ============== FORECAST CHART ==============
+async function loadForecast() {
+    try {
+        let data = cachedForecastData;
+        
+        // Fetch if not cached
+        if (!data) {
+            const lat = CONFIG.fixedLat;
+            const lng = CONFIG.fixedLng;
+            
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant&hourly=surface_pressure&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,precipitation&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FNew_York&forecast_days=10`;
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                showForecastError('Could not load forecast');
+                return;
+            }
+            
+            data = await response.json();
+        }
+        
+        if (data.current) {
+            updateCurrentConditions(data.current);
+        }
+        
+        if (data.daily && data.daily.time && data.daily.time.length > 0) {
+            const dailyPressure = [];
+            if (data.hourly && data.hourly.surface_pressure) {
+                for (let d = 0; d < data.daily.time.length; d++) {
+                    const dayStart = d * 24;
+                    const dayPressures = data.hourly.surface_pressure.slice(dayStart, dayStart + 24);
+                    const avgPressure = dayPressures.reduce((a, b) => a + b, 0) / dayPressures.length;
+                    dailyPressure.push((avgPressure / 33.864).toFixed(2));
+                }
+            }
+            
+            const days = data.daily.time.map((date, i) => ({
+                datetime: date,
+                tempmax: data.daily.temperature_2m_max[i],
+                tempmin: data.daily.temperature_2m_min[i],
+                windspeed: data.daily.wind_speed_10m_max[i],
+                winddir: data.daily.wind_direction_10m_dominant[i],
+                precipprob: data.daily.precipitation_probability_max[i],
+                pressure: dailyPressure[i] || null,
+                moonphase: calculateMoonPhase(date)
+            }));
+            
+            forecastDays = days;
+            createForecastChart(days);
+            createPredictionChart();
+            updateOptimalConditions();
+        } else {
+            showForecastError('No forecast data available');
+        }
+    } catch (error) {
+        console.error('Error loading forecast:', error);
+        showForecastError('Could not load forecast');
+    }
+}
+
+function updateCurrentConditions(current) {
+    const pressure = (current.surface_pressure / 33.864).toFixed(2);
+    const windDir = getWindDirection(current.wind_direction_10m);
+    
+    const container = document.getElementById('currentConditions');
+    container.innerHTML = `
+        <div style="text-align: center;">
+            <div style="color: #888; font-size: 11px;">📍 Location</div>
+            <div style="color: #fff; font-size: 14px; font-weight: bold;">Current</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="color: #888; font-size: 11px;">TEMP</div>
+            <div style="color: #F4D03F; font-size: 20px; font-weight: bold;">${Math.round(current.temperature_2m)}°F</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="color: #888; font-size: 11px;">HUMIDITY</div>
+            <div style="color: #5DADE2; font-size: 16px;">${current.relative_humidity_2m}%</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="color: #888; font-size: 11px;">WIND</div>
+            <div style="color: #7FB3D5; font-size: 16px;">${Math.round(current.wind_speed_10m)} mph ${windDir}</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="color: #888; font-size: 11px;">GUSTS</div>
+            <div style="color: #7FB3D5; font-size: 16px;">${Math.round(current.wind_gusts_10m)} mph</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="color: #888; font-size: 11px;">PRESSURE</div>
+            <div style="color: #AF7AC5; font-size: 16px; font-weight: bold;">${pressure} inHg</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="color: #888; font-size: 11px;">PRECIP</div>
+            <div style="color: #85C1E9; font-size: 16px;">${current.precipitation}"</div>
+        </div>
+    `;
+}
+
+function showForecastError(message) {
+    const container = document.getElementById('chart_forecast');
+    container.innerHTML = `<div class="d-flex align-items-center justify-content-center h-100 text-muted">
+        <div class="text-center">
+            <i class="bi bi-cloud-slash" style="font-size: 2rem;"></i>
+            <p class="mt-2 mb-0">${message}</p>
+        </div>
+    </div>`;
+}
+
+function createForecastChart(days) {
+    const categories = days.map(d => {
+        const date = new Date(d.datetime + 'T12:00:00');
+        return Highcharts.dateFormat('%a %m/%d', date);
+    });
+    
+    const tempMax = days.map(d => d.tempmax);
+    const tempMin = days.map(d => d.tempmin);
+    const windSpeed = days.map(d => d.windspeed);
+    const precipProb = days.map(d => d.precipprob);
+    const pressure = days.map(d => d.pressure);
+    const windDir = days.map(d => typeof d.winddir === 'string' ? d.winddir : getWindDirection(d.winddir));
+    const moonPhase = days.map(d => getMoonSymbol(d.moonphase));
+    
+    Highcharts.chart('chart_forecast', {
+        chart: {
+            backgroundColor: 'transparent'
+        },
+        
+        title: {
+            text: null
+        },
+        
+        xAxis: {
+            categories: categories,
+            labels: {
+                style: { color: '#E0E0E3' },
+                formatter: function() {
+                    const idx = this.pos;
+                    return this.value + '<br/>' + moonPhase[idx];
+                }
+            },
+            lineColor: '#555',
+            tickColor: '#555'
+        },
+        
+        yAxis: [{
+            title: {
+                text: 'Temperature (°F)',
+                style: { color: '#E0E0E3' }
+            },
+            labels: {
+                style: { color: '#E0E0E3' },
+                format: '{value}°'
+            },
+            gridLineColor: '#444'
+        }, {
+            title: {
+                text: 'Wind (MPH) / Precip (%)',
+                style: { color: '#E0E0E3' }
+            },
+            labels: {
+                style: { color: '#E0E0E3' }
+            },
+            opposite: true,
+            min: 0,
+            gridLineWidth: 0
+        }],
+        
+        legend: {
+            enabled: true,
+            itemStyle: { color: '#E0E0E3' },
+            itemHoverStyle: { color: '#fff' }
+        },
+        
+        tooltip: {
+            shared: true,
+            backgroundColor: 'rgba(40, 40, 40, 0.95)',
+            style: { color: '#E0E0E3' },
+            formatter: function() {
+                const idx = this.points[0].point.index;
+                let html = `<b>${this.x}</b><br/>`;
+                html += `🌡️ High: <b>${tempMax[idx]}°F</b> / Low: <b>${tempMin[idx]}°F</b><br/>`;
+                html += `💨 Wind: <b>${Math.round(windSpeed[idx])} MPH ${windDir[idx]}</b><br/>`;
+                html += `📊 Pressure: <b>${pressure[idx]} inHg</b><br/>`;
+                html += `🌧️ Precip: <b>${precipProb[idx]}%</b><br/>`;
+                html += `${moonPhase[idx]} Moon`;
+                return html;
+            }
+        },
+        
+        plotOptions: {
+            series: {
+                marker: {
+                    enabled: true,
+                    radius: 4
+                }
+            }
+        },
+        
+        series: [{
+            name: 'High Temp',
+            type: 'spline',
+            color: '#FF6B6B',
+            data: tempMax,
+            yAxis: 0,
+            tooltip: { valueSuffix: '°F' }
+        }, {
+            name: 'Low Temp',
+            type: 'spline',
+            color: '#4ECDC4',
+            data: tempMin,
+            yAxis: 0,
+            tooltip: { valueSuffix: '°F' }
+        }, {
+            name: 'Wind Speed',
+            type: 'column',
+            color: 'rgba(100, 149, 237, 0.7)',
+            data: windSpeed,
+            yAxis: 1,
+            tooltip: { valueSuffix: ' MPH' }
+        }, {
+            name: 'Precip Chance',
+            type: 'area',
+            color: 'rgba(135, 206, 250, 0.3)',
+            lineColor: 'rgba(135, 206, 250, 0.8)',
+            data: precipProb,
+            yAxis: 1,
+            tooltip: { valueSuffix: '%' }
+        }],
+        
+        credits: { enabled: false }
+    });
+}
+
+// ============== ACTIVITY PREDICTION ==============
+function calculateHistoricalActivityRates(animalFilter) {
+    // Filter photos for daytime only, by animal type
+    const validPhotos = dashboardPhotos.filter(photo => {
+        const sun = sunData[photo.dateStr] || {};
+        if (!sun.sunrise || !sun.sunset) return false;
+        if (photo.timeMs < sun.sunrise || photo.timeMs >= sun.sunset) return false;
+        
+        if (animalFilter === 'buck' && photo.animalType !== 'buck') return false;
+        if (animalFilter === 'doe' && photo.animalType !== 'doe') return false;
+        if (animalFilter === 'all' && photo.animalType !== 'buck' && photo.animalType !== 'doe') return false;
+        
+        return true;
+    });
+    
+    const morningPhotos = validPhotos.filter(p => p.timeMs < 12 * 60 * 60 * 1000);
+    const eveningPhotos = validPhotos.filter(p => p.timeMs >= 12 * 60 * 60 * 1000);
+    
+    return {
+        total: validPhotos.length,
+        morning: morningPhotos.length,
+        evening: eveningPhotos.length,
+        pressure: calculateBucketRates(validPhotos, 'pressure'),
+        pressureMorning: calculateBucketRates(morningPhotos, 'pressure'),
+        pressureEvening: calculateBucketRates(eveningPhotos, 'pressure'),
+        temp: calculateBucketRates(validPhotos, 'temp'),
+        tempMorning: calculateBucketRates(morningPhotos, 'temp'),
+        tempEvening: calculateBucketRates(eveningPhotos, 'temp'),
+        windDir: calculateBucketRates(validPhotos, 'windDir'),
+        windDirMorning: calculateBucketRates(morningPhotos, 'windDir'),
+        windDirEvening: calculateBucketRates(eveningPhotos, 'windDir'),
+        windSpeed: calculateBucketRates(validPhotos, 'windSpeed'),
+        windSpeedMorning: calculateBucketRates(morningPhotos, 'windSpeed'),
+        windSpeedEvening: calculateBucketRates(eveningPhotos, 'windSpeed'),
+        moonPhase: calculateBucketRates(validPhotos, 'moonPhase'),
+        moonPhaseMorning: calculateBucketRates(morningPhotos, 'moonPhase'),
+        moonPhaseEvening: calculateBucketRates(eveningPhotos, 'moonPhase')
+    };
+}
+
+function calculateBucketRates(photos, field) {
+    const buckets = getBucketCounts(photos, field);
+    const total = photos.length || 1;
+    const numBuckets = buckets.length;
+    const expectedRate = 1 / numBuckets;
+    return buckets.map(count => (count / total) / expectedRate);
+}
+
+function getBucketCounts(photos, field) {
+    switch (field) {
+        case 'pressure':
+            const pressure = new Array(22).fill(0);
+            photos.forEach(p => {
+                if (p.barometricPressure === '' || p.barometricPressure === null || p.barometricPressure === undefined) return;
+                const val = parseFloat(p.barometricPressure);
+                if (isNaN(val)) return;
+                let idx;
+                if (val < 29.50) idx = 0;
+                else if (val >= 30.50) idx = 21;
+                else idx = Math.floor((val - 29.50) / 0.05) + 1;
+                pressure[idx]++;
+            });
+            return pressure;
+            
+        case 'temp':
+            const temp = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+            photos.forEach(p => {
+                let t = null;
+                if (p.tempMin !== '' && p.tempMin !== undefined && p.tempMax !== '' && p.tempMax !== undefined) {
+                    t = (parseFloat(p.tempMin) + parseFloat(p.tempMax)) / 2;
+                } else if (p.tempMin !== '' && p.tempMin !== undefined) t = parseFloat(p.tempMin);
+                else if (p.tempMax !== '' && p.tempMax !== undefined) t = parseFloat(p.tempMax);
+                if (t === null || isNaN(t)) return;
+                
+                if (t < 20) temp[0]++;
+                else if (t < 30) temp[1]++;
+                else if (t < 40) temp[2]++;
+                else if (t < 50) temp[3]++;
+                else if (t < 60) temp[4]++;
+                else if (t < 70) temp[5]++;
+                else if (t < 80) temp[6]++;
+                else if (t < 90) temp[7]++;
+                else temp[8]++;
+            });
+            return temp;
+            
+        case 'windDir':
+            const windDir = [0, 0, 0, 0, 0, 0, 0, 0];
+            photos.forEach(p => {
+                if (p.windDirection === '' || p.windDirection === null || p.windDirection === undefined) return;
+                const idx = Math.round(p.windDirection / 45) % 8;
+                windDir[idx]++;
+            });
+            return windDir;
+            
+        case 'windSpeed':
+            const windSpeed = [0, 0, 0, 0, 0, 0];
+            photos.forEach(p => {
+                if (p.windSpeed === '' || p.windSpeed === null || p.windSpeed === undefined) return;
+                const speed = parseFloat(p.windSpeed);
+                if (isNaN(speed)) return;
+                if (speed < 3) windSpeed[0]++;
+                else if (speed < 6) windSpeed[1]++;
+                else if (speed < 9) windSpeed[2]++;
+                else if (speed < 12) windSpeed[3]++;
+                else if (speed < 15) windSpeed[4]++;
+                else windSpeed[5]++;
+            });
+            return windSpeed;
+            
+        case 'moonPhase':
+            const moonPhase = [0, 0, 0, 0, 0, 0, 0, 0];
+            photos.forEach(p => {
+                const sun = sunData[p.dateStr] || {};
+                if (sun.moonphase === '' || sun.moonphase === null || sun.moonphase === undefined) return;
+                const phase = parseFloat(sun.moonphase);
+                if (phase < 0.0625) moonPhase[0]++;
+                else if (phase < 0.1875) moonPhase[1]++;
+                else if (phase < 0.3125) moonPhase[2]++;
+                else if (phase < 0.4375) moonPhase[3]++;
+                else if (phase < 0.5625) moonPhase[4]++;
+                else if (phase < 0.6875) moonPhase[5]++;
+                else if (phase < 0.8125) moonPhase[6]++;
+                else if (phase < 0.9375) moonPhase[7]++;
+                else moonPhase[0]++;
+            });
+            return moonPhase;
+            
+        default:
+            return [];
+    }
+}
+
+function getForecastBucketIndex(day, field) {
+    switch (field) {
+        case 'pressure':
+            const p = parseFloat(day.pressure);
+            if (p < 29.50) return 0;
+            if (p >= 30.50) return 21;
+            return Math.floor((p - 29.50) / 0.05) + 1;
+            
+        case 'temp':
+            const t = (day.tempmax + day.tempmin) / 2;
+            if (t < 20) return 0;
+            if (t < 30) return 1;
+            if (t < 40) return 2;
+            if (t < 50) return 3;
+            if (t < 60) return 4;
+            if (t < 70) return 5;
+            if (t < 80) return 6;
+            if (t < 90) return 7;
+            return 8;
+            
+        case 'windDir':
+            return Math.round(day.winddir / 45) % 8;
+            
+        case 'windSpeed':
+            const ws = day.windspeed;
+            if (ws < 3) return 0;
+            if (ws < 6) return 1;
+            if (ws < 9) return 2;
+            if (ws < 12) return 3;
+            if (ws < 15) return 4;
+            return 5;
+            
+        case 'moonPhase':
+            const mp = day.moonphase;
+            if (mp < 0.0625) return 0;
+            if (mp < 0.1875) return 1;
+            if (mp < 0.3125) return 2;
+            if (mp < 0.4375) return 3;
+            if (mp < 0.5625) return 4;
+            if (mp < 0.6875) return 5;
+            if (mp < 0.8125) return 6;
+            if (mp < 0.9375) return 7;
+            return 0;
+            
+        default:
+            return 0;
+    }
+}
+
+function calculateActivityScore(day, rates, period = 'all') {
+    const weights = {
+        pressure: parseInt(document.getElementById('weightPressure')?.value) || 3,
+        temp: parseInt(document.getElementById('weightTemp')?.value) || 1,
+        windDir: parseInt(document.getElementById('weightWindDir')?.value) || 2,
+        windSpeed: parseInt(document.getElementById('weightWindSpeed')?.value) || 2,
+        moonPhase: parseInt(document.getElementById('weightMoon')?.value) || 2
+    };
+    
+    const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
+    const totalDisplay = document.getElementById('totalWeightDisplay');
+    if (totalDisplay) {
+        totalDisplay.textContent = `= ${totalWeight}`;
+        totalDisplay.style.color = totalWeight === 10 ? '#4CAF50' : '#FFC107';
+    }
+    
+    const suffix = period === 'morning' ? 'Morning' : period === 'evening' ? 'Evening' : '';
+    
+    let totalScore = 0;
+    let maxPossible = 0;
+    
+    for (const [field, weight] of Object.entries(weights)) {
+        if (weight === 0) continue;
+        
+        const ratesKey = field + suffix;
+        const rateArray = rates[ratesKey] || rates[field];
+        
+        if (!rateArray || rateArray.length === 0) continue;
+        
+        const bucketIdx = getForecastBucketIndex(day, field);
+        const rate = rateArray[bucketIdx] || 0;
+        const normalizedRate = Math.min(rate / 2, 1);
+        
+        totalScore += normalizedRate * weight;
+        maxPossible += weight;
+    }
+    
+    if (maxPossible === 0) return 1;
+    return Math.max(1, Math.round((totalScore / maxPossible) * 10));
+}
+
+function createPredictionChart() {
+    if (forecastDays.length === 0 || dashboardPhotos.length === 0) {
+        document.getElementById('chart_prediction').innerHTML = 
+            '<div class="d-flex align-items-center justify-content-center h-100 text-muted"><span>Loading prediction data...</span></div>';
+        return;
+    }
+    
+    const animalFilter = document.getElementById('predictionAnimalFilter')?.value || 'all';
+    const rates = calculateHistoricalActivityRates(animalFilter);
+    
+    const categories = forecastDays.map(d => {
+        const date = new Date(d.datetime + 'T12:00:00');
+        return Highcharts.dateFormat('%a %m/%d', date);
+    });
+    
+    const morningScores = forecastDays.map(d => calculateActivityScore(d, rates, 'morning'));
+    const eveningScores = forecastDays.map(d => calculateActivityScore(d, rates, 'evening'));
+    
+    const bestMorningIdx = morningScores.indexOf(Math.max(...morningScores));
+    const bestEveningIdx = eveningScores.indexOf(Math.max(...eveningScores));
+    
+    Highcharts.chart('chart_prediction', {
+        chart: {
+            type: 'column',
+            backgroundColor: 'transparent',
+            height: 300
+        },
+        
+        title: { text: null },
+        
+        xAxis: {
+            categories: categories,
+            labels: { style: { color: '#E0E0E3', fontSize: '10px' } },
+            lineColor: '#555',
+            tickColor: '#555'
+        },
+        
+        yAxis: {
+            min: 1,
+            max: 10,
+            title: { text: null },
+            labels: { style: { color: '#E0E0E3' } },
+            gridLineColor: '#444',
+            plotBands: [{
+                from: 7, to: 10,
+                color: 'rgba(76, 175, 80, 0.1)',
+                label: { text: 'High', style: { color: '#4CAF50', fontSize: '9px' }, align: 'right', x: -5 }
+            }]
+        },
+        
+        legend: {
+            enabled: true,
+            itemStyle: { color: '#E0E0E3', fontSize: '10px' }
+        },
+        
+        tooltip: {
+            shared: true,
+            backgroundColor: 'rgba(40, 40, 40, 0.95)',
+            style: { color: '#E0E0E3' },
+            formatter: function() {
+                const idx = this.points[0].point.index;
+                const day = forecastDays[idx];
+                let html = `<b>${this.x}</b><br/>`;
+                html += `🌅 Morning: <b>${morningScores[idx]}/10</b>${idx === bestMorningIdx ? ' ⭐' : ''}<br/>`;
+                html += `🌆 Evening: <b>${eveningScores[idx]}/10</b>${idx === bestEveningIdx ? ' ⭐' : ''}<br/>`;
+                html += `<hr style="margin: 5px 0; border-color: #555;"/>`;
+                html += `🌡️ ${Math.round(day.tempmin)}° - ${Math.round(day.tempmax)}°F<br/>`;
+                html += `💨 ${Math.round(day.windspeed)} mph ${getWindDirection(day.winddir)}<br/>`;
+                html += `📊 ${day.pressure} inHg<br/>`;
+                html += `${getMoonSymbol(day.moonphase)} ${getMoonPhaseName(day.moonphase)}`;
+                return html;
+            }
+        },
+        
+        plotOptions: {
+            column: {
+                grouping: true,
+                shadow: false,
+                borderWidth: 0,
+                dataLabels: {
+                    enabled: true,
+                    style: { color: '#E0E0E3', textOutline: 'none', fontSize: '9px' }
+                }
+            }
+        },
+        
+        series: [{
+            name: '🌅 AM',
+            color: '#FFA726',
+            data: morningScores.map((score, idx) => ({
+                y: score,
+                color: idx === bestMorningIdx ? '#FFD700' : '#FFA726'
+            }))
+        }, {
+            name: '🌆 PM',
+            color: '#7E57C2',
+            data: eveningScores.map((score, idx) => ({
+                y: score,
+                color: idx === bestEveningIdx ? '#BA68C8' : '#7E57C2'
+            }))
+        }],
+        
+        credits: { enabled: false }
+    });
+}
+
+function updatePredictionChart() {
+    createPredictionChart();
+    updateOptimalConditions();
+}
+
+function updateOptimalConditions() {
+    const animalFilter = document.getElementById('predictionAnimalFilter')?.value || 'all';
+    const rates = calculateHistoricalActivityRates(animalFilter);
+    
+    const weights = {
+        pressure: parseInt(document.getElementById('weightPressure')?.value) || 3,
+        temp: parseInt(document.getElementById('weightTemp')?.value) || 1,
+        windDir: parseInt(document.getElementById('weightWindDir')?.value) || 2,
+        windSpeed: parseInt(document.getElementById('weightWindSpeed')?.value) || 2,
+        moon: parseInt(document.getElementById('weightMoon')?.value) || 2
+    };
+    
+    if (rates.total === 0) {
+        document.getElementById('optimalConditions').innerHTML = 
+            '<span class="text-muted">No historical data available</span>';
+        return;
+    }
+    
+    const pressureLabels = ['<29.50"', '29.50"', '29.55"', '29.60"', '29.65"', '29.70"', '29.75"', '29.80"', '29.85"', '29.90"', '29.95"', '30.00"', '30.05"', '30.10"', '30.15"', '30.20"', '30.25"', '30.30"', '30.35"', '30.40"', '30.45"', '≥30.50"'];
+    const tempLabels = ['<20°', '20-30°', '30-40°', '40-50°', '50-60°', '60-70°', '70-80°', '80-90°', '90+°'];
+    const windDirLabels = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const windSpeedLabels = ['0-3', '3-6', '6-9', '9-12', '12-15', '15+'];
+    const moonLabels = ['🌑 New', '🌒 Wax Cres', '🌓 1st Qtr', '🌔 Wax Gib', '🌕 Full', '🌖 Wan Gib', '🌗 3rd Qtr', '🌘 Wan Cres'];
+    
+    const bestPressure = rates.pressure.indexOf(Math.max(...rates.pressure));
+    const bestTemp = rates.temp.indexOf(Math.max(...rates.temp));
+    const bestWindDir = rates.windDir.indexOf(Math.max(...rates.windDir));
+    const bestWindSpeed = rates.windSpeed.indexOf(Math.max(...rates.windSpeed));
+    const bestMoon = rates.moonPhase.indexOf(Math.max(...rates.moonPhase));
+    
+    const animalLabel = animalFilter === 'buck' ? 'Buck' : animalFilter === 'doe' ? 'Doe' : 'Deer';
+    
+    document.getElementById('optimalConditions').innerHTML = `
+        <span class="text-muted">🎯 Optimal for ${animalLabel} (${rates.total} photos):</span>
+        <span class="ms-3" style="opacity: ${weights.pressure > 0 ? 1 : 0.4};"><span style="color: #AF7AC5;">📊</span> <b>${pressureLabels[bestPressure]}</b></span>
+        <span class="ms-3" style="opacity: ${weights.temp > 0 ? 1 : 0.4};"><span style="color: #F4D03F;">🌡️</span> <b>${tempLabels[bestTemp]}</b></span>
+        <span class="ms-3" style="opacity: ${weights.windDir > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">💨</span> <b>${windDirLabels[bestWindDir]}</b></span>
+        <span class="ms-3" style="opacity: ${weights.windSpeed > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">💨</span> <b>${windSpeedLabels[bestWindSpeed]} mph</b></span>
+        <span class="ms-3" style="opacity: ${weights.moon > 0 ? 1 : 0.4};"><span style="color: #D4AC0D;">🌙</span> <b>${moonLabels[bestMoon]}</b></span>
+    `;
+}
+
+function updateTooltipPanel(point) {
+    // Skip non-data series (night shading)
+    if (!point.camera) return;
+    
+    let html = '';
+    if (point.photoUrl) {
+        html += `<img src="${point.photoUrl}" alt="Trail cam photo" />`;
+    }
+    if (point.label) {
+        html += `<div class="info-row"><span class="info-label">Name:</span> <span class="info-value">${point.label}</span></div>`;
+    }
+    html += `<div class="info-row"><span class="info-label">Camera:</span> <span class="info-value">${point.camera}</span></div>`;
+    html += `<div class="info-row"><span class="info-label">Time:</span> <span class="info-value">${Highcharts.dateFormat('%l:%M %P', point.y)}</span></div>`;
+    html += `<div class="info-row"><span class="info-label">Date:</span> <span class="info-value">${Highcharts.dateFormat('%a, %b %d', point.x)}</span></div>`;
+    if (point.windSpeed !== '' && point.windDirection !== '') {
+        html += `<div class="info-row"><span class="info-label">Wind:</span> <span class="info-value">${getWindDirection(point.windDirection)} at ${point.windSpeed} MPH</span></div>`;
+    }
+    
+    document.getElementById('tooltipPanel').innerHTML = html;
+}
+
+// ============== KEYBOARD ==============
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeZoomModal(); return; }
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || currentView !== 'single') return;
+    
+    switch(e.key) {
+        case 'ArrowLeft': prevPhoto(); break;
+        case 'ArrowRight': case ' ': e.preventDefault(); nextPhoto(); break;
+    }
+    switch(e.key.toLowerCase()) {
+        case 'b': tagPhoto('Buck'); break;
+        case 'd': tagPhoto('Doe'); break;
+        case 't': tagPhoto('Turkey'); break;
+        case 'r': tagPhoto('Bear'); break;
+        case 'p': tagPhoto('Predator'); break;
+        case 'i': tagPhoto('Bird'); break;
+        case 'h': tagPhoto('Human'); break;
+        case 'v': tagPhoto('Vehicle/ATV'); break;
+        case 'o': tagPhoto('Other'); break;
+        case 'n': tagPhoto('No Animals'); break;
+        case 'g': openGalleryModal(); break;
+    }
+});
+
+// ============== INIT ==============
+// No auto-session check - just show login screen
+</script>
+
+</body>
+</html>
