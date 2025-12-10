@@ -303,7 +303,7 @@
         .grid-selected-count { color: var(--accent-green); font-weight: bold; font-size: 14px; margin-bottom: 5px; }
         
         /* Dashboard */
-        #chart_main { height: 480px; background: var(--bg-card); border-radius: 8px; overflow: visible; }
+        #chart_main { height: 520px; background: var(--bg-card); border-radius: 8px; overflow: visible; }
         #chart_polar { width: 500px; height: 500px; }
         #chart_weather { width: 100%; height: 450px; }
         #chart_forecast { height: 300px; }
@@ -725,10 +725,10 @@
                 </div>
                 
                 <!-- Main Chart -->
-                <div class="card mb-4">
-                    <div class="card-body">
+                <div class="card mb-4" style="overflow: visible;">
+                    <div class="card-body" style="overflow: visible;">
                         <div class="row">
-                            <div class="col-8" style="padding-bottom: 40px;">
+                            <div class="col-8" style="padding-bottom: 40px; overflow: visible;">
                                 <div id="chart_main"></div>
                             </div>
                             <div class="col-4">
@@ -2777,7 +2777,7 @@ function createMainChart() {
             backgroundColor: '#2a2a2b',
             style: { fontFamily: "'Segoe UI', sans-serif" },
             marginLeft: 70,
-            marginBottom: 50
+            marginBottom: 60
         },
         accessibility: { enabled: false },
         title: { text: 'Trail Observations', style: { color: '#E0E0E3', fontSize: '20px' } },
@@ -2787,8 +2787,7 @@ function createMainChart() {
             itemHoverStyle: { color: '#FFF' },
             align: 'left',
             verticalAlign: 'bottom',
-            floating: true,
-            y: 35
+            y: 5
         },
         rangeSelector: {
             selected: 1,
@@ -2797,7 +2796,7 @@ function createMainChart() {
             floating: true,
             align: 'right',
             verticalAlign: 'bottom',
-            y: 35,
+            y: 5,
             buttonTheme: { fill: '#3e3e40', stroke: '#606063', style: { color: '#E0E0E3' }, states: { hover: { fill: '#4e4e50' }, select: { fill: '#1C86EE', style: { color: 'white' } } } }
         },
         navigator: { enabled: true, height: 30, margin: 10 },
