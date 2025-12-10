@@ -796,8 +796,8 @@
                             <!-- Activity Prediction -->
                             <div class="col-md-6">
                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                                    <span class="text-muted small">🦌 Activity Prediction</span>
-                                    <select id="predictionAnimalFilter" class="form-select form-select-sm w-auto" style="font-size: 11px;" onchange="updatePredictionChart()">
+                                    <label class="text-muted small me-2">Activity Prediction:</label>
+                                    <select id="predictionAnimalFilter" class="form-select form-select-sm w-auto" onchange="updatePredictionChart()">
                                         <option value="all">All Deer</option>
                                         <option value="buck">Buck</option>
                                         <option value="doe">Doe</option>
@@ -805,15 +805,15 @@
                                 </div>
                                 <div class="d-flex flex-wrap align-items-center gap-1 mb-2" style="font-size: 11px;">
                                     <span class="text-muted">Weights:</span>
-                                    <span style="color: #AF7AC5;">📊</span>
+                                    <span style="color: #AF7AC5;">Press</span>
                                     <input type="number" id="weightPressure" value="3" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #7FB3D5;">💨D</span>
+                                    <span style="color: #7FB3D5;">WDir</span>
                                     <input type="number" id="weightWindDir" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #7FB3D5;">💨S</span>
+                                    <span style="color: #7FB3D5;">WSpd</span>
                                     <input type="number" id="weightWindSpeed" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #D4AC0D;">🌙</span>
+                                    <span style="color: #D4AC0D;">Moon</span>
                                     <input type="number" id="weightMoon" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #F4D03F;">🌡️</span>
+                                    <span style="color: #F4D03F;">Temp</span>
                                     <input type="number" id="weightTemp" value="1" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
                                     <span class="text-muted" id="totalWeightDisplay">= 10</span>
                                 </div>
@@ -824,7 +824,7 @@
                             </div>
                             <!-- Forecast -->
                             <div class="col-md-6">
-                                <h6 class="text-muted mb-2" style="font-size: 13px;">🌤️ 10-Day Forecast & Current Conditions</h6>
+                                <label class="text-muted small mb-2 d-block">10-Day Forecast & Current Conditions:</label>
                                 <div id="currentConditions" class="d-flex gap-3 p-2 mb-2 rounded flex-wrap" style="background: #333; font-size: 11px;">
                                     <div class="text-muted">Loading current conditions...</div>
                                 </div>
@@ -3200,11 +3200,11 @@ function createWeatherChart() {
         },
         
         series: [{
-            name: '☀️ Daytime',
+            name: 'Daytime',
             color: '#F4D03F',
             data: dayCounts
         }, {
-            name: '🌙 Nighttime',
+            name: 'Nighttime',
             color: '#5D6D7E',
             data: nightCounts
         }],
@@ -3871,6 +3871,8 @@ function createPredictionChart() {
         return Highcharts.dateFormat('%a %m/%d', date);
     });
     
+    const moonPhases = forecastDays.map(d => getMoonSymbol(d.moonphase));
+    
     const morningScores = forecastDays.map(d => calculateActivityScore(d, rates, 'morning'));
     const eveningScores = forecastDays.map(d => calculateActivityScore(d, rates, 'evening'));
     
@@ -3889,7 +3891,13 @@ function createPredictionChart() {
         
         xAxis: {
             categories: categories,
-            labels: { style: { color: '#E0E0E3', fontSize: '10px' } },
+            labels: { 
+                style: { color: '#E0E0E3' },
+                formatter: function() {
+                    const idx = this.pos;
+                    return this.value + '<br/>' + moonPhases[idx];
+                }
+            },
             lineColor: '#555',
             tickColor: '#555'
         },
@@ -3909,7 +3917,8 @@ function createPredictionChart() {
         
         legend: {
             enabled: true,
-            itemStyle: { color: '#E0E0E3', fontSize: '10px' }
+            itemStyle: { color: '#E0E0E3' },
+            itemHoverStyle: { color: '#fff' }
         },
         
         tooltip: {
@@ -3920,12 +3929,12 @@ function createPredictionChart() {
                 const idx = this.points[0].point.index;
                 const day = forecastDays[idx];
                 let html = `<b>${this.x}</b><br/>`;
-                html += `🌅 Morning: <b>${morningScores[idx]}/10</b>${idx === bestMorningIdx ? ' ⭐' : ''}<br/>`;
-                html += `🌆 Evening: <b>${eveningScores[idx]}/10</b>${idx === bestEveningIdx ? ' ⭐' : ''}<br/>`;
+                html += `Morning: <b>${morningScores[idx]}/10</b>${idx === bestMorningIdx ? ' ⭐' : ''}<br/>`;
+                html += `Evening: <b>${eveningScores[idx]}/10</b>${idx === bestEveningIdx ? ' ⭐' : ''}<br/>`;
                 html += `<hr style="margin: 5px 0; border-color: #555;"/>`;
-                html += `🌡️ ${Math.round(day.tempmin)}° - ${Math.round(day.tempmax)}°F<br/>`;
-                html += `💨 ${Math.round(day.windspeed)} mph ${getWindDirection(day.winddir)}<br/>`;
-                html += `📊 ${day.pressure} inHg<br/>`;
+                html += `${Math.round(day.tempmin)}° - ${Math.round(day.tempmax)}°F<br/>`;
+                html += `Wind: ${Math.round(day.windspeed)} mph ${getWindDirection(day.winddir)}<br/>`;
+                html += `Pressure: ${day.pressure} inHg<br/>`;
                 html += `${getMoonSymbol(day.moonphase)} ${getMoonPhaseName(day.moonphase)}`;
                 return html;
             }
@@ -3944,18 +3953,18 @@ function createPredictionChart() {
         },
         
         series: [{
-            name: '🌅 AM',
-            color: '#FFA726',
+            name: 'Morning',
+            color: '#F4D03F',
             data: morningScores.map((score, idx) => ({
                 y: score,
-                color: idx === bestMorningIdx ? '#FFD700' : '#FFA726'
+                color: idx === bestMorningIdx ? '#FFD700' : '#F4D03F'
             }))
         }, {
-            name: '🌆 PM',
-            color: '#7E57C2',
+            name: 'Evening',
+            color: '#5D6D7E',
             data: eveningScores.map((score, idx) => ({
                 y: score,
-                color: idx === bestEveningIdx ? '#BA68C8' : '#7E57C2'
+                color: idx === bestEveningIdx ? '#8395A7' : '#5D6D7E'
             }))
         }],
         
@@ -4001,12 +4010,12 @@ function updateOptimalConditions() {
     const animalLabel = animalFilter === 'buck' ? 'Buck' : animalFilter === 'doe' ? 'Doe' : 'Deer';
     
     document.getElementById('optimalConditions').innerHTML = `
-        <span class="text-muted">🎯 Optimal for ${animalLabel} (${rates.total} photos):</span>
-        <span class="ms-3" style="opacity: ${weights.pressure > 0 ? 1 : 0.4};"><span style="color: #AF7AC5;">📊</span> <b>${pressureLabels[bestPressure]}</b></span>
-        <span class="ms-3" style="opacity: ${weights.temp > 0 ? 1 : 0.4};"><span style="color: #F4D03F;">🌡️</span> <b>${tempLabels[bestTemp]}</b></span>
-        <span class="ms-3" style="opacity: ${weights.windDir > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">💨</span> <b>${windDirLabels[bestWindDir]}</b></span>
-        <span class="ms-3" style="opacity: ${weights.windSpeed > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">💨</span> <b>${windSpeedLabels[bestWindSpeed]} mph</b></span>
-        <span class="ms-3" style="opacity: ${weights.moon > 0 ? 1 : 0.4};"><span style="color: #D4AC0D;">🌙</span> <b>${moonLabels[bestMoon]}</b></span>
+        <span class="text-muted">Optimal for ${animalLabel} (${rates.total} photos):</span>
+        <span class="ms-3" style="opacity: ${weights.pressure > 0 ? 1 : 0.4};"><span style="color: #AF7AC5;">Press:</span> <b>${pressureLabels[bestPressure]}</b></span>
+        <span class="ms-3" style="opacity: ${weights.temp > 0 ? 1 : 0.4};"><span style="color: #F4D03F;">Temp:</span> <b>${tempLabels[bestTemp]}</b></span>
+        <span class="ms-3" style="opacity: ${weights.windDir > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">WDir:</span> <b>${windDirLabels[bestWindDir]}</b></span>
+        <span class="ms-3" style="opacity: ${weights.windSpeed > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">WSpd:</span> <b>${windSpeedLabels[bestWindSpeed]} mph</b></span>
+        <span class="ms-3" style="opacity: ${weights.moon > 0 ? 1 : 0.4};"><span style="color: #D4AC0D;">Moon:</span> <b>${moonLabels[bestMoon]}</b></span>
     `;
 }
 
