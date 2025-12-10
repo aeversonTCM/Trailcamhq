@@ -144,47 +144,6 @@
         
         .login-card { max-width: 400px; width: 100%; }
         
-        /* Photo Viewer Styles */
-        .photo-wrapper {
-            background: #1a1a1b;
-            border-radius: 8px;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .photo-wrapper img {
-            max-width: 1024px;
-            max-height: 768px;
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-        }
-        
-        .photo-info {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            padding: 15px 0;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-        
-        .photo-info span { display: flex; align-items: center; gap: 5px; }
-        
-        .nav-btn {
-            background: var(--bg-input);
-            border: none;
-            color: var(--text-primary);
-            padding: 20px;
-            font-size: 24px;
-            cursor: pointer;
-            border-radius: 8px;
-        }
-        
-        .nav-btn:hover { background: #555; }
-        
         /* Grid View */
         .photo-grid {
             display: grid;
@@ -515,23 +474,6 @@
         .progress { height: 6px; background-color: var(--bg-input); }
         .progress-bar { background-color: var(--accent-green); }
         
-        /* Keyboard hints */
-        .keyboard-hint {
-            color: var(--text-muted);
-            font-size: 12px;
-            padding: 10px;
-            background: var(--bg-dark);
-            border-radius: 4px;
-            margin-top: 10px;
-        }
-        
-        .keyboard-hint kbd {
-            background: var(--bg-input);
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 11px;
-        }
-        
         /* Sidebar */
         .grid-sidebar { display: flex; flex-direction: column; gap: 8px; min-width: 160px; }
         .grid-selected-count { color: var(--accent-green); font-weight: bold; font-size: 14px; margin-bottom: 5px; }
@@ -803,75 +745,14 @@
                                 </select>
                             </div>
                             <div class="col-auto">
-                                <div class="btn-group">
-                                    <button class="btn btn-outline-success btn-sm" id="viewToggleBtn" onclick="toggleView()">
-                                        <i class="bi bi-image me-1"></i>Single View
-                                    </button>
-                                    <button class="btn btn-outline-success btn-sm" onclick="refreshPhotos()">
-                                        <i class="bi bi-arrow-clockwise"></i> Refresh
-                                    </button>
-                                </div>
+                                <button class="btn btn-outline-success btn-sm" onclick="refreshPhotos()">
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                                </button>
                             </div>
                             <div class="col-auto ms-auto">
                                 <span class="text-muted">
-                                    <strong id="currentPosition">0</strong> of <strong id="totalCount">0</strong>
+                                    <strong id="totalCount">0</strong> photos
                                 </span>
-                            </div>
-                            <div class="col-12">
-                                <div class="progress">
-                                    <div class="progress-bar" id="progressFill" role="progressbar" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Single Photo View -->
-                <div id="photoContainer" style="display: none;">
-                    <div class="row">
-                        <div class="col-lg-9">
-                            <div class="d-flex align-items-center gap-2">
-                                <button class="nav-btn" onclick="prevPhoto()"><i class="bi bi-chevron-left"></i></button>
-                                <div class="photo-wrapper flex-grow-1">
-                                    <img id="photoImage" src="" alt="Trail cam photo" />
-                                </div>
-                                <button class="nav-btn" onclick="nextPhoto()"><i class="bi bi-chevron-right"></i></button>
-                            </div>
-                            <div class="photo-info" id="photoInfo"></div>
-                            <div class="keyboard-hint">
-                                <strong>Keyboard:</strong> 
-                                <kbd>←</kbd> Previous, <kbd>→</kbd> Next<span class="admin-only"> | 
-                                <kbd>B</kbd> Buck, <kbd>D</kbd> Doe, <kbd>T</kbd> Turkey, <kbd>R</kbd> Bear, 
-                                <kbd>P</kbd> Predator, <kbd>I</kbd> Bird, <kbd>H</kbd> Human, <kbd>V</kbd> Vehicle, 
-                                <kbd>O</kbd> Other, <kbd>N</kbd> No Animals | <kbd>G</kbd> Gallery</span>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 admin-only">
-                            <div class="card">
-                                <div class="card-header">Actions</div>
-                                <div class="card-body d-grid gap-2">
-                                    <select id="tagDropdown" class="form-select" onchange="tagFromDropdown()">
-                                        <option value="">🏷️ Select Tag...</option>
-                                        <option value="__none__">🚫 Clear Tag</option>
-                                        <option value="Buck">🦌 Buck</option>
-                                        <option value="Doe">🦌 Doe</option>
-                                        <option value="Turkey">🦃 Turkey</option>
-                                        <option value="Bear">🐻 Bear</option>
-                                        <option value="Predator">🐺 Predator</option>
-                                        <option value="Bird">🐦 Bird</option>
-                                        <option value="Human">🧑 Human</option>
-                                        <option value="Vehicle/ATV">🚗 Vehicle</option>
-                                        <option value="Other">❓ Other</option>
-                                        <option value="No Animals">❌ No Animals</option>
-                                    </select>
-                                    <hr class="my-2">
-                                    <button class="btn btn-success" onclick="openGalleryModal()">
-                                        <i class="bi bi-folder-plus me-1"></i>Add to Gallery
-                                    </button>
-                                    <button class="btn btn-danger" onclick="openDeleteModal()">
-                                        <i class="bi bi-trash me-1"></i>Delete Photo
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1088,26 +969,6 @@
             </div>
             <div class="modal-body">
                 <div class="row g-3" id="bulkGalleryGrid"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content bg-dark">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Delete Photo</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-                <p>Are you sure you want to delete this photo?</p>
-                <p class="text-muted small">This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
             </div>
         </div>
     </div>
@@ -1474,7 +1335,6 @@ let tagIdToName = {};
 let groupsLookup = {};
 let galleries = [];
 let cameras = new Set();
-let currentView = 'grid';
 let gridDisplayCount = 100;
 let selectedPhotos = new Set();
 let cacheEnabled = false; // Set to true once Google Sheets URL is configured
@@ -1506,7 +1366,7 @@ const tagConfig = {
 };
 
 // Bootstrap modals
-let galleryModalInstance, bulkGalleryModalInstance, deleteModalInstance, bulkDeleteModalInstance;
+let galleryModalInstance, bulkGalleryModalInstance, bulkDeleteModalInstance;
 
 // ============== LOADING ==============
 function showLoading(msg = 'Loading...') {
@@ -1544,8 +1404,6 @@ async function loadFromAPI() {
 }
 
 function updatePhotoCount() {
-    // Update the photo counter without resetting the current view
-    document.getElementById('currentPosition').textContent = filteredPhotos.length > 0 ? currentIndex + 1 : 0;
     document.getElementById('totalCount').textContent = filteredPhotos.length;
 }
 
@@ -2258,7 +2116,6 @@ async function initializeApp() {
     // Initialize modals
     galleryModalInstance = new bootstrap.Modal(document.getElementById('galleryModal'));
     bulkGalleryModalInstance = new bootstrap.Modal(document.getElementById('bulkGalleryModal'));
-    deleteModalInstance = new bootstrap.Modal(document.getElementById('deleteModal'));
     bulkDeleteModalInstance = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
     
     // Decide whether to use cache:
@@ -2695,65 +2552,12 @@ function applyFilters() {
     });
     
     currentIndex = 0;
-    if (currentView === 'grid') {
-        gridDisplayCount = 100;
-        renderGrid();
-        updateBulkActionBar();
-    } else {
-        updateStats();
-        showCurrentPhoto();
-    }
+    gridDisplayCount = 100;
+    renderGrid();
+    updateBulkActionBar();
 }
 
 // ============== PHOTO DISPLAY ==============
-function showCurrentPhoto() {
-    const container = document.getElementById('photoContainer');
-    const complete = document.getElementById('completeMessage');
-    
-    if (currentView === 'grid') return;
-    
-    if (filteredPhotos.length === 0) {
-        container.style.display = 'none';
-        complete.style.display = 'block';
-        return;
-    }
-    
-    container.style.display = 'block';
-    complete.style.display = 'none';
-    
-    const photo = filteredPhotos[currentIndex];
-    const photoDate = getPhotoDate(photo);
-    
-    // Gallery names
-    let galleryDisplay = '';
-    if (photo.photoGroupIds && photo.photoGroupIds.length > 0) {
-        const names = photo.photoGroupIds.map(id => groupsLookup[id]).filter(n => n).join(', ');
-        if (names) galleryDisplay = `<span><img src="https://png.pngtree.com/png-vector/20230729/ourmid/pngtree-whitetail-buck-vector-png-image_7006974.png" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;" />${names}</span>`;
-    }
-    
-    // Update tag dropdown
-    const tagName = photo.tagIds && photo.tagIds.length > 0 ? tagIdToName[photo.tagIds[0]] : null;
-    document.getElementById('tagDropdown').value = tagName || '';
-    
-    document.getElementById('photoInfo').innerHTML = `
-        <span><i class="bi bi-camera me-1"></i>${photo.cameraName || 'Unknown'}</span>
-        <span><i class="bi bi-geo-alt me-1"></i>${photo.cameraLocation || ''}</span>
-        <span><i class="bi bi-calendar me-1"></i>${formatDate(photoDate)}</span>
-        <span><i class="bi bi-clock me-1"></i>${formatTime(photoDate)}</span>
-        ${galleryDisplay}
-    `;
-    
-    document.getElementById('photoImage').src = photo.photoUrl;
-    updateStats();
-}
-
-function updateStats() {
-    document.getElementById('currentPosition').textContent = filteredPhotos.length > 0 ? currentIndex + 1 : 0;
-    document.getElementById('totalCount').textContent = filteredPhotos.length;
-    const pct = filteredPhotos.length > 0 ? ((currentIndex + 1) / filteredPhotos.length) * 100 : 0;
-    document.getElementById('progressFill').style.width = pct + '%';
-}
-
 function getPhotoDate(photo) {
     return photo.photoDateUtc || photo.photoDate || photo.createdAt || null;
 }
@@ -2766,24 +2570,6 @@ function formatDate(utc) {
 function formatTime(utc) {
     if (!utc) return '--';
     return new Date(utc).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-}
-
-function prevPhoto() { currentIndex = currentIndex <= 0 ? filteredPhotos.length - 1 : currentIndex - 1; showCurrentPhoto(); }
-function nextPhoto() { currentIndex = currentIndex >= filteredPhotos.length - 1 ? 0 : currentIndex + 1; showCurrentPhoto(); }
-
-// ============== VIEW TOGGLE ==============
-function toggleView() { setView(currentView === 'single' ? 'grid' : 'single'); }
-
-function setView(view) {
-    currentView = view;
-    document.getElementById('viewToggleBtn').innerHTML = view === 'single' 
-        ? '<i class="bi bi-grid-3x3-gap-fill me-1"></i>Grid View' 
-        : '<i class="bi bi-image me-1"></i>Single View';
-    document.getElementById('photoContainer').style.display = view === 'single' ? 'block' : 'none';
-    document.getElementById('gridContainer').style.display = view === 'grid' ? 'block' : 'none';
-    selectedPhotos.clear();
-    if (view === 'grid') { gridDisplayCount = 100; renderGrid(); updateBulkActionBar(); }
-    else { updateStats(); showCurrentPhoto(); }
 }
 
 // ============== GRID VIEW ==============
@@ -2911,41 +2697,6 @@ function updateBulkActionBar() {
 }
 
 // ============== TAGGING ==============
-async function tagPhoto(tagName) {
-    const isClearing = tagName === '__none__';
-    const tagId = isClearing ? null : tagsLookup[tagName];
-    if (!isClearing && !tagId) return;
-    if (filteredPhotos.length === 0) return;
-    
-    const photo = filteredPhotos[currentIndex];
-    showLoading(isClearing ? 'Clearing tag...' : `Tagging as ${tagName}...`);
-    
-    try {
-        const newTagIds = isClearing ? [] : [tagId];
-        const response = await fetch(`${CONFIG.apiBaseUrl}/photos/${photo.photoId}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tagIds: newTagIds })
-        });
-        
-        if (response.ok) {
-            photo.tagIds = newTagIds;
-            const idx = allPhotos.findIndex(p => p.photoId === photo.photoId);
-            if (idx !== -1) allPhotos[idx].tagIds = newTagIds;
-            showCurrentPhoto();
-            
-            // Sync to cache
-            updatePhotoCacheAfterTagChange(photo.photoId, newTagIds);
-        }
-    } catch (e) { alert('Error: ' + e.message); }
-    hideLoading();
-}
-
-function tagFromDropdown() {
-    const val = document.getElementById('tagDropdown').value;
-    if (val) tagPhoto(val);
-}
-
 function bulkTagFromDropdown() {
     const val = document.getElementById('bulkTagDropdown').value;
     if (val && selectedPhotos.size > 0) { bulkTagPhotos(val); document.getElementById('bulkTagDropdown').value = ''; }
@@ -3001,7 +2752,7 @@ function openGalleryModal() { if (filteredPhotos.length > 0) galleryModalInstanc
 function openBulkGalleryModal() { if (selectedPhotos.size > 0) bulkGalleryModalInstance.show(); }
 
 async function selectGalleryFromModal(galleryId) {
-    const photo = filteredPhotos[currentIndex];
+    const photo = filteredPhotos[zoomIndex];
     galleryModalInstance.hide();
     showLoading('Adding to gallery...');
     try {
@@ -3013,7 +2764,8 @@ async function selectGalleryFromModal(galleryId) {
         if (!photo.photoGroupIds) photo.photoGroupIds = [];
         if (!photo.photoGroupIds.includes(galleryId)) photo.photoGroupIds.push(galleryId);
         await loadGalleries();
-        showCurrentPhoto();
+        updateZoomModal();
+        renderGrid();
         
         // Sync to cache
         updatePhotoCacheAfterGalleryChange(photo.photoId, photo.photoGroupIds);
@@ -3048,27 +2800,7 @@ async function bulkAddToGallery(galleryId) {
 }
 
 // ============== DELETE ==============
-function openDeleteModal() { if (filteredPhotos.length > 0) deleteModalInstance.show(); }
 function openBulkDeleteModal() { if (selectedPhotos.size > 0) { document.getElementById('bulkDeleteCount').textContent = selectedPhotos.size; bulkDeleteModalInstance.show(); } }
-
-async function confirmDelete() {
-    deleteModalInstance.hide();
-    const photo = filteredPhotos[currentIndex];
-    showLoading('Deleting...');
-    try {
-        await fetch(`${CONFIG.apiBaseUrl}/photos/${photo.photoId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${accessToken}` } });
-        const idx = allPhotos.findIndex(p => p.photoId === photo.photoId);
-        if (idx !== -1) allPhotos.splice(idx, 1);
-        filteredPhotos.splice(currentIndex, 1);
-        if (currentIndex >= filteredPhotos.length) currentIndex = Math.max(0, filteredPhotos.length - 1);
-        await loadGalleries();
-        showCurrentPhoto();
-        
-        // Sync to cache
-        deletePhotoFromCache(photo.photoId);
-    } catch (e) { alert('Error: ' + e.message); }
-    hideLoading();
-}
 
 async function confirmBulkDelete() {
     bulkDeleteModalInstance.hide();
@@ -5621,38 +5353,11 @@ function updateTooltipPanel(point) {
 
 // ============== KEYBOARD ==============
 document.addEventListener('keydown', e => {
-    // Quick Tag Zoom Modal navigation (highest priority)
+    // Quick Tag Zoom Modal navigation
     if (zoomModalOpen) {
         if (e.key === 'Escape') { closeZoomModal(); return; }
         if (e.key === 'ArrowLeft') { zoomPrev(); return; }
         if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); zoomNext(); return; }
-        return; // Don't process other keys while in zoom modal
-    }
-    
-    if (e.key === 'Escape') { closeZoomModal(); return; }
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || currentView !== 'single') return;
-    
-    // Navigation - available to all users
-    switch(e.key) {
-        case 'ArrowLeft': prevPhoto(); break;
-        case 'ArrowRight': case ' ': e.preventDefault(); nextPhoto(); break;
-    }
-    
-    // Tagging shortcuts - admin only
-    if (accessLevel !== 'admin') return;
-    
-    switch(e.key.toLowerCase()) {
-        case 'b': tagPhoto('Buck'); break;
-        case 'd': tagPhoto('Doe'); break;
-        case 't': tagPhoto('Turkey'); break;
-        case 'r': tagPhoto('Bear'); break;
-        case 'p': tagPhoto('Predator'); break;
-        case 'i': tagPhoto('Bird'); break;
-        case 'h': tagPhoto('Human'); break;
-        case 'v': tagPhoto('Vehicle/ATV'); break;
-        case 'o': tagPhoto('Other'); break;
-        case 'n': tagPhoto('No Animals'); break;
-        case 'g': openGalleryModal(); break;
     }
 });
 
