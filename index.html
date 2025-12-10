@@ -277,10 +277,10 @@
         
         .zoom-modal-close {
             position: absolute;
-            top: -15px; right: -15px;
+            top: 10px; right: 10px;
             width: 36px; height: 36px;
-            background: var(--bg-input);
-            border: 2px solid #555;
+            background: rgba(0,0,0,0.6);
+            border: none;
             border-radius: 50%;
             color: #fff;
             font-size: 24px;
@@ -288,6 +288,196 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+        
+        .zoom-modal-close:hover {
+            background: rgba(0,0,0,0.8);
+        }
+        
+        /* Quick Tag Navigation Zones */
+        .zoom-image-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+        }
+        
+        .zoom-nav-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 15%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 5;
+        }
+        
+        .zoom-nav-zone:hover {
+            opacity: 1;
+        }
+        
+        .zoom-nav-zone.left {
+            left: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.4), transparent);
+            padding-left: 10px;
+        }
+        
+        .zoom-nav-zone.right {
+            right: 0;
+            background: linear-gradient(to left, rgba(0,0,0,0.4), transparent);
+            padding-right: 10px;
+        }
+        
+        .zoom-nav-zone.disabled {
+            pointer-events: none;
+            opacity: 0 !important;
+        }
+        
+        .zoom-nav-arrow {
+            color: white;
+            font-size: 48px;
+            font-weight: 300;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        
+        /* Quick Tag Info Panel */
+        .zoom-info {
+            padding: 12px 15px;
+            background: var(--bg-card);
+            border-top: 1px solid #444;
+        }
+        
+        .zoom-info .info-line {
+            margin-bottom: 4px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        
+        .zoom-info .info-label {
+            color: var(--text-muted);
+        }
+        
+        .zoom-info .info-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .zoom-info .info-name {
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+        
+        .zoom-info .info-sep {
+            color: var(--text-muted);
+            margin: 0 6px;
+        }
+        
+        /* Quick Tag Action Buttons */
+        .zoom-actions {
+            padding: 12px 15px;
+            background: var(--bg-card);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        .zoom-tag-btn {
+            padding: 8px 16px;
+            border: 1px solid #555;
+            border-radius: 20px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .zoom-tag-btn:hover {
+            border-color: var(--accent-green);
+            background: rgba(74, 222, 128, 0.1);
+        }
+        
+        .zoom-tag-btn.active {
+            border-color: var(--accent-green);
+            background: var(--accent-green);
+            color: #000;
+        }
+        
+        .zoom-action-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #444;
+        }
+        
+        .zoom-delete-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--accent-red);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--accent-red);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .zoom-delete-btn:hover {
+            background: var(--accent-red);
+            color: #fff;
+        }
+        
+        .zoom-skip-btn {
+            padding: 8px 20px;
+            border: 1px solid #555;
+            border-radius: 20px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .zoom-skip-btn:hover {
+            border-color: var(--text-primary);
+            background: #555;
+        }
+        
+        /* Quick Tag Progress Bar */
+        .zoom-progress-wrapper {
+            padding: 0;
+            background: var(--bg-card);
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+        
+        .zoom-progress-wrapper .progress {
+            border-radius: 0;
+            height: 6px;
+        }
+        
+        /* Flash animation on tag */
+        .zoom-flash {
+            animation: zoom-flash-anim 0.3s ease-out;
+        }
+        
+        @keyframes zoom-flash-anim {
+            0% { box-shadow: inset 0 0 0 3px var(--accent-green); }
+            100% { box-shadow: inset 0 0 0 0 var(--accent-green); }
         }
         
         /* Progress bar */
@@ -912,11 +1102,26 @@
     </div>
 </div>
 
-<!-- Zoom Modal -->
+<!-- Quick Tag Zoom Modal -->
 <div id="zoomModal" class="zoom-modal-overlay" style="display: none;" onclick="closeZoomModal()">
     <div class="zoom-modal-container" onclick="event.stopPropagation()">
-        <img id="zoomImage" class="zoom-modal-img" src="" alt="Zoomed photo" />
         <button class="zoom-modal-close" onclick="closeZoomModal()">×</button>
+        <div class="zoom-image-wrapper">
+            <div class="zoom-nav-zone left" id="zoomNavLeft" onclick="zoomPrev()">
+                <span class="zoom-nav-arrow">‹</span>
+            </div>
+            <img id="zoomImage" class="zoom-modal-img" src="" alt="Photo" />
+            <div class="zoom-nav-zone right" id="zoomNavRight" onclick="zoomNext()">
+                <span class="zoom-nav-arrow">›</span>
+            </div>
+        </div>
+        <div class="zoom-info" id="zoomInfo"></div>
+        <div class="zoom-actions" id="zoomActions"></div>
+        <div class="zoom-progress-wrapper">
+            <div class="progress">
+                <div class="progress-bar" id="zoomProgress" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -2555,7 +2760,7 @@ function renderGrid() {
         return;
     }
     
-    grid.innerHTML = filteredPhotos.slice(0, gridDisplayCount).map(photo => {
+    grid.innerHTML = filteredPhotos.slice(0, gridDisplayCount).map((photo, index) => {
         const isSelected = selectedPhotos.has(photo.photoId);
         const tagName = photo.tagIds && photo.tagIds.length > 0 ? tagIdToName[photo.tagIds[0]] || '' : 'Untagged';
         const photoDate = getPhotoDate(photo);
@@ -2570,7 +2775,7 @@ function renderGrid() {
             <div class="grid-item ${isSelected ? 'selected' : ''}" data-photo-id="${photo.photoId}" onclick="togglePhotoSelection('${photo.photoId}', event)">
                 <div class="grid-item-checkbox">${isSelected ? '✓' : ''}</div>
                 <img class="grid-item-img" src="${photo.photoUrl}" loading="lazy" />
-                <div class="grid-zoom-overlay" onclick="openZoomModal('${photo.photoUrl}', event)">Click to Zoom</div>
+                <div class="grid-zoom-overlay" onclick="openZoomModal(${index}, event)">Quick Tag</div>
                 <div class="grid-item-info">
                     <div class="camera">${photo.cameraName || 'Unknown'}</div>
                     <div>${formatDate(photoDate)} ${formatTime(photoDate)}</div>
@@ -2824,9 +3029,243 @@ async function confirmBulkDelete() {
     applyFilters();
 }
 
-// ============== ZOOM ==============
-function openZoomModal(url, e) { e.stopPropagation(); document.getElementById('zoomImage').src = url; document.getElementById('zoomModal').style.display = 'flex'; }
-function closeZoomModal() { document.getElementById('zoomModal').style.display = 'none'; }
+// ============== QUICK TAG ZOOM MODAL ==============
+let zoomIndex = 0;
+let zoomModalOpen = false;
+
+function openZoomModal(index, e) {
+    if (e) e.stopPropagation();
+    if (filteredPhotos.length === 0) return;
+    
+    zoomIndex = Math.max(0, Math.min(index, filteredPhotos.length - 1));
+    zoomModalOpen = true;
+    document.getElementById('zoomModal').style.display = 'flex';
+    renderZoomTagButtons();
+    updateZoomModal();
+}
+
+function closeZoomModal() {
+    zoomModalOpen = false;
+    document.getElementById('zoomModal').style.display = 'none';
+}
+
+function zoomPrev() {
+    if (zoomIndex > 0) {
+        zoomIndex--;
+        updateZoomModal();
+    }
+}
+
+function zoomNext() {
+    if (zoomIndex < filteredPhotos.length - 1) {
+        zoomIndex++;
+        updateZoomModal();
+    } else {
+        // End of photos
+        closeZoomModal();
+    }
+}
+
+function updateZoomModal() {
+    const photo = filteredPhotos[zoomIndex];
+    if (!photo) return;
+    
+    // Update image
+    document.getElementById('zoomImage').src = photo.photoUrl;
+    
+    // Update progress bar
+    const pct = ((zoomIndex + 1) / filteredPhotos.length) * 100;
+    document.getElementById('zoomProgress').style.width = pct + '%';
+    
+    // Update nav zone states
+    document.getElementById('zoomNavLeft').classList.toggle('disabled', zoomIndex === 0);
+    document.getElementById('zoomNavRight').classList.toggle('disabled', zoomIndex === filteredPhotos.length - 1);
+    
+    // Build info panel (matching tooltip panel format)
+    const photoDate = getPhotoDate(photo);
+    let infoHtml = '<div class="info-line">';
+    infoHtml += `<span class="info-label">Camera:</span> <span class="info-value">${photo.cameraName || 'Unknown'}</span>`;
+    infoHtml += `<span class="info-sep">|</span>`;
+    infoHtml += `<span class="info-label">Date:</span> <span class="info-value">${formatDate(photoDate)}</span>`;
+    infoHtml += `<span class="info-sep">|</span>`;
+    infoHtml += `<span class="info-label">Time:</span> <span class="info-value">${formatTime(photoDate)}</span>`;
+    infoHtml += '</div>';
+    
+    // Line 2: Weather + Tags
+    infoHtml += '<div class="info-line">';
+    if (photo.weatherData) {
+        const temp = photo.weatherData.temperature;
+        const wind = photo.weatherData.windSpeed;
+        const windDir = photo.weatherData.windDirection;
+        if (temp !== undefined) {
+            infoHtml += `<span class="info-label">Temp:</span> <span class="info-value">${Math.round(temp)}°F</span>`;
+            infoHtml += `<span class="info-sep">|</span>`;
+        }
+        if (wind !== undefined && windDir !== undefined) {
+            infoHtml += `<span class="info-label">Wind:</span> <span class="info-value">${getWindDirection(windDir)} ${Math.round(wind)}mph</span>`;
+            infoHtml += `<span class="info-sep">|</span>`;
+        }
+    }
+    
+    // Current tags
+    const photoTagNames = (photo.tagIds || []).map(id => tagIdToName[id]).filter(Boolean);
+    
+    if (photoTagNames.length > 0) {
+        infoHtml += `<span class="info-label">Tags:</span> <span class="info-name">${photoTagNames.join(', ')}</span>`;
+    } else {
+        infoHtml += `<span class="info-label">Tags:</span> <span class="info-value" style="color: var(--text-muted);">None</span>`;
+    }
+    infoHtml += '</div>';
+    
+    document.getElementById('zoomInfo').innerHTML = infoHtml;
+    
+    // Update tag button states
+    updateZoomTagButtonStates(photo);
+}
+
+function renderZoomTagButtons() {
+    const actionsDiv = document.getElementById('zoomActions');
+    
+    // Tag configuration with display names
+    const tagConfigs = [
+        { name: 'Doe', icon: '🦌' },
+        { name: 'Buck', icon: '🦌' },
+        { name: 'Turkey', icon: '🦃' },
+        { name: 'Squirrel', icon: '🐿️' },
+        { name: 'Bear', icon: '🐻' },
+        { name: 'Raccoon', icon: '🦝' },
+        { name: 'Human', icon: '👤' },
+        { name: 'Junk', icon: '📷' }
+    ];
+    
+    let html = '';
+    
+    // Tag buttons - use tagsLookup to check if tag exists
+    tagConfigs.forEach(config => {
+        const tagId = tagsLookup[config.name];
+        if (tagId) {
+            html += `<button class="zoom-tag-btn" data-tag="${config.name}" onclick="zoomTagPhoto('${config.name}')">${config.icon} ${config.name}</button>`;
+        }
+    });
+    
+    // Action row with Delete and Skip
+    html += '<div class="zoom-action-row">';
+    html += `<button class="zoom-delete-btn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> Delete</button>`;
+    html += `<button class="zoom-skip-btn" onclick="zoomNext()">Skip →</button>`;
+    html += '</div>';
+    
+    actionsDiv.innerHTML = html;
+}
+
+function updateZoomTagButtonStates(photo) {
+    const photoTagIds = photo.tagIds || [];
+    const buttons = document.querySelectorAll('#zoomActions .zoom-tag-btn[data-tag]');
+    
+    buttons.forEach(btn => {
+        const tagName = btn.getAttribute('data-tag');
+        const tagId = tagsLookup[tagName];
+        if (tagId && photoTagIds.includes(tagId)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+async function zoomTagPhoto(tagName) {
+    const photo = filteredPhotos[zoomIndex];
+    if (!photo) return;
+    
+    const tagId = tagsLookup[tagName];
+    if (!tagId) return;
+    
+    const currentTagIds = photo.tagIds || [];
+    const alreadyHasTag = currentTagIds.includes(tagId);
+    
+    try {
+        let newTagIds;
+        if (alreadyHasTag) {
+            // Remove the tag
+            newTagIds = currentTagIds.filter(id => id !== tagId);
+        } else {
+            // Add the tag (replace existing - single tag mode)
+            newTagIds = [tagId];
+        }
+        
+        const response = await fetch(`${CONFIG.apiBaseUrl}/photos/${photo.photoId}`, {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ tagIds: newTagIds })
+        });
+        
+        if (response.ok) {
+            // Update photo in all arrays
+            photo.tagIds = newTagIds;
+            const idx = allPhotos.findIndex(p => p.photoId === photo.photoId);
+            if (idx !== -1) allPhotos[idx].tagIds = newTagIds;
+            
+            // Sync to cache
+            updatePhotoCacheAfterTagChange(photo.photoId, newTagIds);
+            
+            if (!alreadyHasTag) {
+                // Flash animation and advance
+                document.getElementById('zoomImage').classList.add('zoom-flash');
+                setTimeout(() => {
+                    document.getElementById('zoomImage').classList.remove('zoom-flash');
+                    zoomNext();
+                }, 200);
+                return;
+            }
+        }
+        
+        updateZoomModal();
+        renderGrid();
+        
+    } catch (err) {
+        console.error('Error tagging photo:', err);
+    }
+}
+
+async function zoomDeletePhoto() {
+    const photo = filteredPhotos[zoomIndex];
+    if (!photo) return;
+    
+    if (!confirm(`Delete this photo permanently?`)) return;
+    
+    try {
+        const response = await fetch(`${CONFIG.apiBaseUrl}/photos/${photo.photoId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        
+        if (response.ok) {
+            // Remove from all arrays
+            const idx = allPhotos.findIndex(p => p.photoId === photo.photoId);
+            if (idx !== -1) allPhotos.splice(idx, 1);
+            filteredPhotos.splice(zoomIndex, 1);
+            deletePhotoFromCache(photo.photoId);
+            
+            // Update grid
+            renderGrid();
+            updatePhotoCount();
+            
+            if (filteredPhotos.length === 0) {
+                closeZoomModal();
+            } else {
+                if (zoomIndex >= filteredPhotos.length) {
+                    zoomIndex = filteredPhotos.length - 1;
+                }
+                updateZoomModal();
+            }
+        }
+    } catch (err) {
+        console.error('Error deleting photo:', err);
+        alert('Failed to delete photo');
+    }
+}
 
 // ============== DASHBOARD ==============
 
@@ -5032,6 +5471,14 @@ function updateTooltipPanel(point) {
 
 // ============== KEYBOARD ==============
 document.addEventListener('keydown', e => {
+    // Quick Tag Zoom Modal navigation (highest priority)
+    if (zoomModalOpen) {
+        if (e.key === 'Escape') { closeZoomModal(); return; }
+        if (e.key === 'ArrowLeft') { zoomPrev(); return; }
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); zoomNext(); return; }
+        return; // Don't process other keys while in zoom modal
+    }
+    
     if (e.key === 'Escape') { closeZoomModal(); return; }
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || currentView !== 'single') return;
     
