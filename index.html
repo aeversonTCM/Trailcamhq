@@ -1011,6 +1011,9 @@ async function adminQuickLogin() {
         localStorage.setItem('trailcam_token', accessToken);
         localStorage.setItem('trailcam_email', creds.email);
         
+        // Defer local cache saves during login - we'll do one save at the end
+        deferLocalCacheSave = true;
+        
         // Initialize app (loads from cache)
         await initializeApp();
         
@@ -1060,7 +1063,13 @@ async function adminQuickLogin() {
             setTimeout(() => hideSyncStatus(), 2000);
         }
         
+        // Now do one final save to local cache
+        deferLocalCacheSave = false;
+        await saveCurrentStateToLocalCache();
+        console.log('Final local cache save complete');
+        
     } catch (error) {
+        deferLocalCacheSave = false;
         hideLoading();
         console.error('Admin login error:', error);
         document.getElementById('loginError').textContent = 'Connection failed. Please try again.';
@@ -1436,6 +1445,7 @@ const DB_VERSION = 1;
 const STORE_NAME = 'cache';
 
 let dbInstance = null;
+let deferLocalCacheSave = false; // Flag to batch saves during login
 
 // Initialize IndexedDB
 function initDB() {
@@ -1686,6 +1696,12 @@ async function postToCache(data) {
 
 // Save current state to local cache
 async function saveCurrentStateToLocalCache() {
+    // Skip if saves are being deferred (during bulk operations like login)
+    if (deferLocalCacheSave) {
+        console.log('Local cache save deferred');
+        return;
+    }
+    
     const cacheData = {
         photos: allPhotos,
         tags: Object.keys(tagsLookup).map(name => ({ name, tagId: tagsLookup[name] })),
