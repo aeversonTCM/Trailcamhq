@@ -1177,6 +1177,10 @@ async function viewOnlyLogin() {
 
 // Check on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Clean up logout URL parameter
+    if (window.location.search.includes('logout=')) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
     checkHqSession();
 });
 
@@ -1370,17 +1374,15 @@ function showLoginError(msg) {
 }
 
 function logout() {
+    // Clear all stored data
     accessToken = null;
     accessLevel = null;
     localStorage.removeItem('trailcam_token');
     localStorage.removeItem('trailcam_email');
     sessionStorage.removeItem('hqAccess');
-    document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('mainTabs').style.display = 'none';
-    document.getElementById('loginSection').style.display = 'none';
-    document.getElementById('hqGate').style.display = 'flex';
-    document.getElementById('userDisplay').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'none';
+    
+    // Hard refresh with cache bust
+    window.location.href = window.location.pathname + '?logout=' + Date.now();
 }
 
 async function checkSession() {
@@ -2795,8 +2797,8 @@ function createMainChart() {
             inputEnabled: false,
             floating: true,
             align: 'right',
-            verticalAlign: 'bottom',
-            y: 5,
+            x: -10,
+            y: -35,
             buttonTheme: { fill: '#3e3e40', stroke: '#606063', style: { color: '#E0E0E3' }, states: { hover: { fill: '#4e4e50' }, select: { fill: '#1C86EE', style: { color: 'white' } } } }
         },
         navigator: { enabled: true, height: 30, margin: 10 },
