@@ -653,7 +653,7 @@
                 <select id="galleryFilter" class="form-select form-select-sm" style="width: auto;" onchange="applyFilters()">
                     <option value="">All Galleries</option>
                 </select>
-                <select id="sortOrder" class="form-select form-select-sm" style="width: auto;" onchange="applyFilters()">
+                <select id="sortOrder" class="form-select form-select-sm" style="width: auto; display: none;" onchange="applyFilters()">
                     <option value="newest">Newest First</option>
                     <option value="oldest">Oldest First</option>
                 </select>
@@ -2234,6 +2234,7 @@ async function initializeApp() {
     
     // Dashboard tab listener (for when switching back to dashboard)
     document.getElementById('dashboard-tab').addEventListener('shown.bs.tab', () => {
+        document.getElementById('sortOrder').style.display = 'none';
         clearFilters();
         if (!dashboardInitialized) {
             initializeDashboard();
@@ -2244,6 +2245,7 @@ async function initializeApp() {
     
     // Photos tab listener - clear filters and render when switching to photos
     document.getElementById('photos-tab').addEventListener('shown.bs.tab', () => {
+        document.getElementById('sortOrder').style.display = '';
         clearFilters();
     });
 }
