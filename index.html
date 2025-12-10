@@ -275,27 +275,6 @@
             border-radius: 4px;
         }
         
-        .zoom-modal-close {
-            position: absolute;
-            top: 10px; right: 10px;
-            width: 36px; height: 36px;
-            background: rgba(0,0,0,0.6);
-            border: none;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            transition: background 0.2s;
-        }
-        
-        .zoom-modal-close:hover {
-            background: rgba(0,0,0,0.8);
-        }
-        
         /* Quick Tag Navigation Zones */
         .zoom-image-wrapper {
             position: relative;
@@ -414,10 +393,19 @@
             color: #000;
         }
         
+        .zoom-none-btn {
+            border-color: #666;
+        }
+        
+        .zoom-none-btn:hover {
+            border-color: var(--accent-red);
+            background: rgba(220, 38, 38, 0.1);
+        }
+        
         .zoom-action-row {
             width: 100%;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             margin-top: 8px;
             padding-top: 12px;
             border-top: 1px solid #444;
@@ -438,23 +426,6 @@
         .zoom-delete-btn:hover {
             background: var(--accent-red);
             color: #fff;
-        }
-        
-        .zoom-skip-btn {
-            padding: 8px 20px;
-            border: 1px solid #555;
-            border-radius: 20px;
-            background: var(--bg-input);
-            color: var(--text-primary);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        
-        .zoom-skip-btn:hover {
-            border-color: var(--text-primary);
-            background: #555;
         }
         
         /* Quick Tag Progress Bar */
@@ -1105,7 +1076,6 @@
 <!-- Quick Tag Zoom Modal -->
 <div id="zoomModal" class="zoom-modal-overlay" style="display: none;" onclick="closeZoomModal()">
     <div class="zoom-modal-container" onclick="event.stopPropagation()">
-        <button class="zoom-modal-close" onclick="closeZoomModal()">×</button>
         <div class="zoom-image-wrapper">
             <div class="zoom-nav-zone left" id="zoomNavLeft" onclick="zoomPrev()">
                 <span class="zoom-nav-arrow">‹</span>
@@ -3125,33 +3095,37 @@ function updateZoomModal() {
 
 function renderZoomTagButtons() {
     const actionsDiv = document.getElementById('zoomActions');
-    
-    // Tag configuration with display names
-    const tagConfigs = [
-        { name: 'Doe', icon: '🦌' },
-        { name: 'Buck', icon: '🦌' },
-        { name: 'Turkey', icon: '🦃' },
-        { name: 'Squirrel', icon: '🐿️' },
-        { name: 'Bear', icon: '🐻' },
-        { name: 'Raccoon', icon: '🦝' },
-        { name: 'Human', icon: '👤' },
-        { name: 'Junk', icon: '📷' }
-    ];
-    
     let html = '';
     
-    // Tag buttons - use tagsLookup to check if tag exists
-    tagConfigs.forEach(config => {
-        const tagId = tagsLookup[config.name];
-        if (tagId) {
-            html += `<button class="zoom-tag-btn" data-tag="${config.name}" onclick="zoomTagPhoto('${config.name}')">${config.icon} ${config.name}</button>`;
-        }
+    // Icon mapping for known tags (matches dropdown)
+    const tagIcons = {
+        'Buck': '🦌',
+        'Doe': '🦌',
+        'Turkey': '🦃',
+        'Bear': '🐻',
+        'Predator': '🐺',
+        'Bird': '🐦',
+        'Human': '🧑',
+        'Vehicle/ATV': '🚗',
+        'Other': '❓',
+        'No Animals': '❌',
+        'Squirrel': '🐿️',
+        'Raccoon': '🦝',
+        'Junk': '📷'
+    };
+    
+    // Build buttons from all available tags in tagsLookup
+    Object.keys(tagsLookup).forEach(tagName => {
+        const icon = tagIcons[tagName] || '🏷️';
+        html += `<button class="zoom-tag-btn" data-tag="${tagName}" onclick="zoomTagPhoto('${tagName}')">${icon} ${tagName}</button>`;
     });
     
-    // Action row with Delete and Skip
+    // None button to clear tags
+    html += `<button class="zoom-tag-btn zoom-none-btn" data-tag="__none__" onclick="zoomClearTag()">🚫 None</button>`;
+    
+    // Action row with Delete (right-aligned)
     html += '<div class="zoom-action-row">';
     html += `<button class="zoom-delete-btn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> Delete</button>`;
-    html += `<button class="zoom-skip-btn" onclick="zoomNext()">Skip →</button>`;
     html += '</div>';
     
     actionsDiv.innerHTML = html;
@@ -3170,6 +3144,44 @@ function updateZoomTagButtonStates(photo) {
             btn.classList.remove('active');
         }
     });
+}
+
+async function zoomClearTag() {
+    const photo = filteredPhotos[zoomIndex];
+    if (!photo) return;
+    
+    try {
+        const response = await fetch(`${CONFIG.apiBaseUrl}/photos/${photo.photoId}`, {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ tagIds: [] })
+        });
+        
+        if (response.ok) {
+            photo.tagIds = [];
+            const idx = allPhotos.findIndex(p => p.photoId === photo.photoId);
+            if (idx !== -1) allPhotos[idx].tagIds = [];
+            
+            updatePhotoCacheAfterTagChange(photo.photoId, []);
+            
+            // Flash and advance
+            document.getElementById('zoomImage').classList.add('zoom-flash');
+            setTimeout(() => {
+                document.getElementById('zoomImage').classList.remove('zoom-flash');
+                zoomNext();
+            }, 200);
+            return;
+        }
+        
+        updateZoomModal();
+        renderGrid();
+        
+    } catch (err) {
+        console.error('Error clearing tag:', err);
+    }
 }
 
 async function zoomTagPhoto(tagName) {
