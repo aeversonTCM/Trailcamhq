@@ -1620,6 +1620,15 @@ async function initializeApp() {
             initializeDashboard();
         }
     });
+    
+    // Photos tab listener (re-render grid when switching to photos)
+    document.getElementById('photos-tab').addEventListener('shown.bs.tab', () => {
+        if (currentView === 'grid') {
+            renderGrid();
+        } else {
+            showCurrentPhoto();
+        }
+    });
 }
 
 async function backgroundSyncWithReveal() {
