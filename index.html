@@ -37,11 +37,20 @@
         /* Navbar */
         .navbar {
             background-color: var(--bg-card) !important;
-            border-bottom: 1px solid #444;
             position: sticky;
             top: 0;
             z-index: 1020;
             height: 56px;
+        }
+        
+        .navbar .container-fluid {
+            position: relative;
+        }
+        
+        #mainTabs {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
         }
         
         .navbar-brand {
@@ -70,12 +79,11 @@
         /* Filter bar (below navbar) */
         .filter-bar {
             position: sticky;
-            top: 55px; /* navbar height minus 1px for seamless join */
+            top: 56px; /* navbar height */
             z-index: 1010;
             background-color: var(--bg-card);
             padding: 10px 0;
             border-bottom: 1px solid #444;
-            margin-top: -1px; /* overlap with navbar border */
         }
         
         /* Cards */
@@ -1143,8 +1151,47 @@ async function adminQuickLogin() {
     }
 }
 
-function checkHqSession() {
+async function checkHqSession() {
     const savedAccess = sessionStorage.getItem('hqAccess');
+    const savedToken = localStorage.getItem('trailcam_token');
+    const savedEmail = localStorage.getItem('trailcam_email');
+    
+    // If we have a saved token, try to restore the session
+    if (savedAccess && savedToken && savedEmail) {
+        accessLevel = savedAccess;
+        accessToken = savedToken;
+        
+        // Validate token by making a quick API call
+        try {
+            showLoading('Restoring session...');
+            const response = await fetch(`${CONFIG.apiBaseUrl}/photo-tags`, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            
+            if (response.ok) {
+                // Token is valid - go straight to app
+                console.log('Session restored from saved token');
+                document.getElementById('hqGate').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'none';
+                applyAccessLevel();
+                await initializeApp();
+                return true;
+            } else {
+                // Token expired - clear and show login
+                console.log('Saved token expired');
+                localStorage.removeItem('trailcam_token');
+                localStorage.removeItem('trailcam_email');
+                hideLoading();
+            }
+        } catch (e) {
+            console.log('Token validation failed:', e);
+            localStorage.removeItem('trailcam_token');
+            localStorage.removeItem('trailcam_email');
+            hideLoading();
+        }
+    }
+    
+    // Fall back to showing login screen
     if (savedAccess === 'admin' || savedAccess === 'viewer') {
         accessLevel = savedAccess;
         document.getElementById('hqGate').style.display = 'none';
