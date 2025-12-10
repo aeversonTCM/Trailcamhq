@@ -1436,7 +1436,7 @@ let groupsLookup = {};
 let galleries = [];
 let cameras = new Set();
 let currentView = 'single';
-let gridDisplayCount = 50;
+let gridDisplayCount = 100;
 let selectedPhotos = new Set();
 let cacheEnabled = false; // Set to true once Google Sheets URL is configured
 
@@ -2657,7 +2657,7 @@ function applyFilters() {
     
     currentIndex = 0;
     if (currentView === 'grid') {
-        gridDisplayCount = 50;
+        gridDisplayCount = 100;
         renderGrid();
     } else {
         updateStats();
@@ -2742,14 +2742,19 @@ function setView(view) {
     document.getElementById('photoContainer').style.display = view === 'single' ? 'block' : 'none';
     document.getElementById('gridContainer').style.display = view === 'grid' ? 'block' : 'none';
     selectedPhotos.clear();
-    if (view === 'grid') { gridDisplayCount = 50; renderGrid(); updateBulkActionBar(); }
+    if (view === 'grid') { gridDisplayCount = 100; renderGrid(); updateBulkActionBar(); }
     else { updateStats(); showCurrentPhoto(); }
 }
 
 // ============== GRID VIEW ==============
+let gridObserver = null;
+
 function renderGrid() {
     const grid = document.getElementById('photoGrid');
     const loadMore = document.getElementById('gridLoadMore');
+    
+    // Disconnect previous observer
+    if (gridObserver) gridObserver.disconnect();
     
     if (filteredPhotos.length === 0) {
         grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">No photos match filter.</div>';
@@ -2785,10 +2790,30 @@ function renderGrid() {
         `;
     }).join('');
     
-    loadMore.style.display = gridDisplayCount < filteredPhotos.length ? 'block' : 'none';
+    // Hide load more button (using infinite scroll instead)
+    loadMore.style.display = 'none';
+    
+    // Set up infinite scroll observer on last item
+    setupGridObserver();
 }
 
-function loadMoreGridItems() { gridDisplayCount += 50; renderGrid(); }
+function setupGridObserver() {
+    const items = document.querySelectorAll('.grid-item');
+    if (items.length === 0 || gridDisplayCount >= filteredPhotos.length) return;
+    
+    // Observe the last item
+    const lastItem = items[items.length - 1];
+    
+    gridObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            loadMoreGridItems();
+        }
+    }, { rootMargin: '100px' });
+    
+    gridObserver.observe(lastItem);
+}
+
+function loadMoreGridItems() { gridDisplayCount += 100; renderGrid(); }
 
 // ============== SELECTION ==============
 function togglePhotoSelection(id, e) {
