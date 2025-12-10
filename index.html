@@ -408,13 +408,17 @@
             background: rgba(220, 38, 38, 0.1);
         }
         
-        .zoom-action-row {
+        .zoom-bottom-row {
             width: 100%;
+            justify-content: center;
+        }
+        
+        .zoom-divider {
+            color: #555;
+            font-size: 20px;
+            padding: 0 8px;
             display: flex;
-            justify-content: flex-end;
-            margin-top: 8px;
-            padding-top: 12px;
-            border-top: 1px solid #444;
+            align-items: center;
         }
         
         .zoom-delete-btn {
@@ -3133,8 +3137,8 @@ function renderZoomTagButtons() {
     });
     html += '</div>';
     
-    // Second row of tags (None first for right-to-left order)
-    html += '<div class="zoom-tag-row">';
+    // Second row of tags (None first for right-to-left order) + Delete
+    html += '<div class="zoom-tag-row zoom-bottom-row">';
     // None button to clear tags
     html += `<button class="zoom-tag-btn zoom-none-btn" data-tag="__none__" onclick="zoomClearTag()">🚫 None</button>`;
     bottomRow.forEach(tagName => {
@@ -3143,10 +3147,8 @@ function renderZoomTagButtons() {
             html += `<button class="zoom-tag-btn" data-tag="${tagName}" onclick="zoomTagPhoto('${tagName}')">${icon} ${tagName}</button>`;
         }
     });
-    html += '</div>';
-    
-    // Action row with Delete (right-aligned)
-    html += '<div class="zoom-action-row">';
+    // Divider and Delete button
+    html += `<span class="zoom-divider">|</span>`;
     html += `<button class="zoom-delete-btn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> Delete</button>`;
     html += '</div>';
     
