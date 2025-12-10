@@ -442,6 +442,9 @@
             <button class="btn btn-outline-warning btn-sm" id="clearCacheBtn" onclick="confirmClearCache()" style="display: none;" title="Clear Local Cache">
                 <i class="bi bi-trash"></i>
             </button>
+            <button class="btn btn-outline-danger btn-sm" id="fullRefreshBtn" onclick="fullRefresh()" style="display: none;" title="Full Refresh - Reload Everything">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
             <span class="text-muted" id="userDisplay" style="display: none;">
                 <i class="bi bi-person-circle me-1"></i><span id="userName"></span>
             </span>
@@ -1774,12 +1777,87 @@ async function confirmClearCache() {
     }
 }
 
+// Full refresh - clear ALL caches and rebuild from Reveal API
+async function fullRefresh() {
+    if (!confirm('⚠️ FULL REFRESH\n\nThis will:\n• Clear local cache\n• Clear cloud cache\n• Reload ALL data from Reveal API\n• Recalculate ALL sun/moon data\n\nThis may take a minute. Continue?')) {
+        return;
+    }
+    
+    if (accessLevel !== 'admin') {
+        alert('Only admin can perform full refresh');
+        return;
+    }
+    
+    try {
+        // 1. Clear local cache
+        showLoading('Clearing local cache...');
+        clearLocalCache();
+        
+        // 2. Clear cloud cache (if enabled)
+        if (isCacheEnabled()) {
+            showLoading('Clearing cloud cache...');
+            await postToCache({ action: 'clearAll' });
+        }
+        
+        // 3. Clear in-memory data
+        showLoading('Clearing memory...');
+        allPhotos = [];
+        filteredPhotos = [];
+        sunData = {};
+        Object.keys(tagsLookup).forEach(k => delete tagsLookup[k]);
+        Object.keys(tagIdToName).forEach(k => delete tagIdToName[k]);
+        Object.keys(groupsLookup).forEach(k => delete groupsLookup[k]);
+        galleries = [];
+        cameras.clear();
+        dashboardPhotos = [];
+        
+        // 4. Reload from Reveal API
+        showLoading('Loading from Reveal API...');
+        await loadFromAPI();
+        
+        // 5. Recalculate ALL sun/moon data (force recalc by clearing sunData first)
+        showLoading('Calculating sun/moon data...');
+        sunData = {}; // Force recalculation
+        await prefetchSunData();
+        
+        // 6. Save to local cache
+        showLoading('Saving to local cache...');
+        saveCurrentStateToLocalCache();
+        
+        // 7. Save to cloud cache
+        if (isCacheEnabled()) {
+            showLoading('Saving to cloud cache...');
+            await postToCache({ action: 'syncPhotos', photos: allPhotos });
+            await postToCache({ action: 'syncTags', tags: Object.keys(tagsLookup).map(name => ({ name, tagId: tagsLookup[name] })) });
+            await postToCache({ action: 'syncGalleries', galleries: galleries });
+            await postToCache({ action: 'syncSunData', sunData: sunData });
+        }
+        
+        // 8. Rebuild dashboard
+        showLoading('Rebuilding dashboard...');
+        await processPhotosForPrediction();
+        await prefetchForecast();
+        
+        hideLoading();
+        updateCacheStatus();
+        
+        alert('✅ Full refresh complete!\n\n• ' + allPhotos.length + ' photos loaded\n• ' + Object.keys(sunData).length + ' dates calculated\n\nRefreshing page...');
+        location.reload();
+        
+    } catch (e) {
+        hideLoading();
+        console.error('Full refresh error:', e);
+        alert('Full refresh failed: ' + e.message + '\n\nPlease try logging in again.');
+    }
+}
+
 // Update cache status indicator
 function updateCacheStatus() {
     const statusEl = document.getElementById('cacheStatus');
     const statusText = document.getElementById('cacheStatusText');
     const cloudBtn = document.getElementById('cloudSyncBtn');
     const clearBtn = document.getElementById('clearCacheBtn');
+    const fullRefreshBtn = document.getElementById('fullRefreshBtn');
     
     if (!statusEl) return;
     
@@ -1790,6 +1868,7 @@ function updateCacheStatus() {
     if (accessLevel === 'admin') {
         statusEl.style.display = 'inline';
         clearBtn.style.display = 'inline-block';
+        fullRefreshBtn.style.display = 'inline-block';
         
         if (hasLocal && hasCloud) {
             statusText.textContent = 'Local + Cloud';
