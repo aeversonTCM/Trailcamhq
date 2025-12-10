@@ -1167,10 +1167,6 @@ async function viewOnlyLogin() {
             }
             
             if (newPhotos.length > 0) {
-                console.log('viewOnlyLogin: New photos found:', newPhotos.length);
-                console.log('New photo IDs:', newPhotos.slice(0, 5).map(p => p.photoId));
-                console.log('Total allPhotos:', allPhotos.length);
-                console.log('First 3 allPhotos IDs:', allPhotos.slice(0, 3).map(p => p.photoId));
                 applyFilters();
                 
                 // Admin syncs to cache, viewer does not
@@ -1627,7 +1623,6 @@ async function initializeApp() {
     
     // Photos tab listener - re-apply filters and render when switching to photos
     document.getElementById('photos-tab').addEventListener('shown.bs.tab', () => {
-        console.log('Photos tab shown, re-applying filters. allPhotos:', allPhotos.length);
         applyFilters();
     });
 }
@@ -1935,7 +1930,12 @@ function applyFilters() {
     const tagFilter = document.getElementById('tagFilter').value;
     const cameraFilter = document.getElementById('cameraFilter').value;
     
-    console.log('applyFilters called. allPhotos:', allPhotos.length, 'filters:', {galleryFilter, tagFilter, cameraFilter});
+    // Sort allPhotos by date (newest first)
+    allPhotos.sort((a, b) => {
+        const dateA = new Date(a.photoDateUtc || a.photoDate || 0);
+        const dateB = new Date(b.photoDateUtc || b.photoDate || 0);
+        return dateB - dateA;
+    });
     
     filteredPhotos = allPhotos.filter(photo => {
         if (galleryFilter && (!photo.photoGroupIds || !photo.photoGroupIds.includes(galleryFilter))) return false;
@@ -1949,9 +1949,6 @@ function applyFilters() {
         return true;
     });
     
-    console.log('After filter. filteredPhotos:', filteredPhotos.length, 'currentView:', currentView);
-    console.log('First 3 photo IDs:', filteredPhotos.slice(0, 3).map(p => p.photoId));
-    
     currentIndex = 0;
     if (currentView === 'grid') {
         gridDisplayCount = 50;
@@ -1964,16 +1961,10 @@ function applyFilters() {
 
 // ============== PHOTO DISPLAY ==============
 function showCurrentPhoto() {
-    console.log('showCurrentPhoto called. filteredPhotos:', filteredPhotos.length, 'currentIndex:', currentIndex);
     const container = document.getElementById('photoContainer');
     const complete = document.getElementById('completeMessage');
     
-    console.log('container:', container, 'complete:', complete);
-    
-    if (currentView === 'grid') {
-        console.log('Exiting - currentView is grid');
-        return;
-    }
+    if (currentView === 'grid') return;
     
     if (filteredPhotos.length === 0) {
         container.style.display = 'none';
@@ -1985,7 +1976,6 @@ function showCurrentPhoto() {
     complete.style.display = 'none';
     
     const photo = filteredPhotos[currentIndex];
-    console.log('Showing photo:', photo.photoId, 'URL:', photo.photoUrl?.substring(0, 50));
     const photoDate = getPhotoDate(photo);
     
     // Gallery names
@@ -2052,7 +2042,6 @@ function setView(view) {
 
 // ============== GRID VIEW ==============
 function renderGrid() {
-    console.log('renderGrid called. filteredPhotos:', filteredPhotos.length);
     const grid = document.getElementById('photoGrid');
     const loadMore = document.getElementById('gridLoadMore');
     
