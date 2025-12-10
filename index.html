@@ -708,55 +708,58 @@
 
 <!-- Main Content -->
 <div id="mainContent" style="display: none;">
+    
+    <!-- Unified Filter Bar -->
+    <div class="sticky-filters">
+        <div class="container-fluid py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <select id="locationFilter" class="form-select form-select-sm" style="width: auto;" onchange="applyFilters()">
+                        <option value="">All Locations</option>
+                    </select>
+                    <select id="cameraFilter" class="form-select form-select-sm" style="width: auto;" onchange="applyFilters()">
+                        <option value="">All Cameras</option>
+                    </select>
+                    <select id="tagFilter" class="form-select form-select-sm" style="width: auto;" onchange="applyFilters()">
+                        <option value="">All Tags</option>
+                        <option value="untagged">Untagged</option>
+                        <option value="Buck">Buck</option>
+                        <option value="Doe">Doe</option>
+                        <option value="Turkey">Turkey</option>
+                        <option value="Bear">Bear</option>
+                        <option value="Predator">Predator</option>
+                        <option value="Bird">Bird</option>
+                        <option value="Human">Human</option>
+                        <option value="Vehicle/ATV">Vehicle/ATV</option>
+                        <option value="Other">Other</option>
+                        <option value="No Animals">No Animals</option>
+                    </select>
+                    <select id="galleryFilter" class="form-select form-select-sm" style="width: auto;" onchange="applyFilters()">
+                        <option value="">All Galleries</option>
+                    </select>
+                    <select id="sortOrder" class="form-select form-select-sm" style="width: auto;" onchange="applyFilters()">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">Clear</button>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="text-muted">
+                        <strong id="totalCount">0</strong> photos
+                    </span>
+                    <button class="btn btn-outline-success btn-sm" onclick="refreshPhotos()">
+                        <i class="bi bi-arrow-repeat"></i> Fetch New
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="tab-content">
         
         <!-- Photos Tab -->
         <div class="tab-pane fade" id="photosContent" role="tabpanel">
             <div class="container-fluid py-3">
-                
-                <!-- Filter Bar -->
-                <div class="card mb-3 sticky-filters">
-                    <div class="card-body py-2">
-                        <div class="row g-2 align-items-center">
-                            <div class="col-auto">
-                                <select id="galleryFilter" class="form-select form-select-sm" onchange="applyFilters()">
-                                    <option value="">All Photos</option>
-                                </select>
-                            </div>
-                            <div class="col-auto">
-                                <select id="tagFilter" class="form-select form-select-sm" onchange="applyFilters()">
-                                    <option value="">All Tags</option>
-                                    <option value="untagged">Untagged</option>
-                                    <option value="Buck">Buck</option>
-                                    <option value="Doe">Doe</option>
-                                    <option value="Turkey">Turkey</option>
-                                    <option value="Bear">Bear</option>
-                                    <option value="Predator">Predator</option>
-                                    <option value="Bird">Bird</option>
-                                    <option value="Human">Human</option>
-                                    <option value="Vehicle/ATV">Vehicle/ATV</option>
-                                    <option value="Other">Other</option>
-                                    <option value="No Animals">No Animals</option>
-                                </select>
-                            </div>
-                            <div class="col-auto">
-                                <select id="cameraFilter" class="form-select form-select-sm" onchange="applyFilters()">
-                                    <option value="">All Cameras</option>
-                                </select>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-outline-success btn-sm" onclick="refreshPhotos()">
-                                    <i class="bi bi-arrow-clockwise"></i> Refresh
-                                </button>
-                            </div>
-                            <div class="col-auto ms-auto">
-                                <span class="text-muted">
-                                    <strong id="totalCount">0</strong> photos
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
                 <!-- Grid View -->
                 <div id="gridContainer">
@@ -815,47 +818,6 @@
         <!-- Dashboard Tab -->
         <div class="tab-pane fade show active" id="dashboardContent" role="tabpanel">
             <div class="container-fluid py-3">
-                
-                <!-- Dashboard Filters -->
-                <div class="card mb-3 sticky-filters">
-                    <div class="card-body py-2">
-                        <div class="row g-2 align-items-center">
-                            <div class="col-auto">
-                                <select id="dashLocationFilter" class="form-select form-select-sm" onchange="applyDashboardFilters()">
-                                    <option value="">All Locations</option>
-                                </select>
-                            </div>
-                            <div class="col-auto">
-                                <select id="dashCameraFilter" class="form-select form-select-sm" onchange="applyDashboardFilters()">
-                                    <option value="">All Cameras</option>
-                                </select>
-                            </div>
-                            <div class="col-auto">
-                                <select id="dashNameFilter" class="form-select form-select-sm" onchange="applyDashboardFilters()">
-                                    <option value="">All Names</option>
-                                </select>
-                            </div>
-                            <div class="col-auto">
-                                <select id="dashTagFilter" class="form-select form-select-sm" onchange="applyDashboardFilters()">
-                                    <option value="">All Tags</option>
-                                    <option value="Buck">Buck</option>
-                                    <option value="Doe">Doe</option>
-                                    <option value="Turkey">Turkey</option>
-                                    <option value="Bear">Bear</option>
-                                    <option value="Predator">Predator</option>
-                                    <option value="Bird">Bird</option>
-                                    <option value="Human">Human</option>
-                                    <option value="Vehicle/ATV">Vehicle/ATV</option>
-                                    <option value="Other">Other</option>
-                                    <option value="No Animals">No Animals</option>
-                                </select>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-outline-secondary btn-sm" onclick="clearDashboardFilters()">Clear Filters</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
                 <!-- Main Chart -->
                 <div class="card mb-4" style="overflow: visible;">
@@ -1142,6 +1104,7 @@ async function adminQuickLogin() {
                     if (existingIds.has(photo.photoId)) { foundExisting = true; continue; }
                     if (!photo.photoDateUtc && !photo.photoDate) continue;
                     if (photo.cameraName) cameras.add(photo.cameraName);
+                    if (photo.cameraLocation) locations.add(photo.cameraLocation);
                     allPhotos.unshift(photo);
                     newPhotos.push(photo);
                 }
@@ -1279,6 +1242,7 @@ async function viewOnlyLogin() {
                     if (existingIds.has(photo.photoId)) { foundExisting = true; continue; }
                     if (!photo.photoDateUtc && !photo.photoDate) continue;
                     if (photo.cameraName) cameras.add(photo.cameraName);
+                    if (photo.cameraLocation) locations.add(photo.cameraLocation);
                     allPhotos.unshift(photo);
                     newPhotos.push(photo);
                 }
@@ -1335,6 +1299,7 @@ let tagIdToName = {};
 let groupsLookup = {};
 let galleries = [];
 let cameras = new Set();
+let locations = new Set();
 let gridDisplayCount = 100;
 let selectedPhotos = new Set();
 let cacheEnabled = false; // Set to true once Google Sheets URL is configured
@@ -1475,6 +1440,7 @@ async function login() {
                         if (existingIds.has(photo.photoId)) { foundExisting = true; continue; }
                         if (!photo.photoDateUtc && !photo.photoDate) continue;
                         if (photo.cameraName) cameras.add(photo.cameraName);
+                        if (photo.cameraLocation) locations.add(photo.cameraLocation);
                         allPhotos.unshift(photo);
                         newPhotos.push(photo);
                     }
@@ -2166,8 +2132,9 @@ async function initializeApp() {
         allPhotos = cachedData.photos;
         cachedData.photos.forEach(p => {
             if (p.cameraName) cameras.add(p.cameraName);
+            if (p.cameraLocation) locations.add(p.cameraLocation);
         });
-        populateCameraFilter();
+        populateFilters();
         filteredPhotos = [...allPhotos];
         applyFilters();
         
@@ -2218,14 +2185,17 @@ async function initializeApp() {
     
     // Dashboard tab listener (for when switching back to dashboard)
     document.getElementById('dashboard-tab').addEventListener('shown.bs.tab', () => {
+        clearFilters();
         if (!dashboardInitialized) {
             initializeDashboard();
+        } else {
+            applyDashboardFilters();
         }
     });
     
-    // Photos tab listener - re-apply filters and render when switching to photos
+    // Photos tab listener - clear filters and render when switching to photos
     document.getElementById('photos-tab').addEventListener('shown.bs.tab', () => {
-        applyFilters();
+        clearFilters();
     });
 }
 
@@ -2306,7 +2276,9 @@ async function backgroundSyncWithReveal() {
             allPhotos = [...newPhotos, ...allPhotos];
             newPhotos.forEach(p => {
                 if (p.cameraName) cameras.add(p.cameraName);
+                if (p.cameraLocation) locations.add(p.cameraLocation);
             });
+            populateFilters();
             
             // Update display
             filteredPhotos = [...allPhotos];
@@ -2417,13 +2389,14 @@ async function loadPhotos() {
             const photoDate = photo.photoDateUtc || photo.photoDate;
             if (!photoDate) { skippedCount++; continue; }
             if (photo.cameraName) cameras.add(photo.cameraName);
+            if (photo.cameraLocation) locations.add(photo.cameraLocation);
             allPhotos.push(photo);
         }
         page++;
     }
     
-    // Populate camera filter
-    populateCameraFilter();
+    // Populate filters
+    populateFilters();
     
     console.log(`Loaded ${allPhotos.length} photos${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`);
     
@@ -2466,11 +2439,17 @@ async function loadPhotos() {
     }
 }
 
-function populateCameraFilter() {
+function populateFilters() {
     const cameraSelect = document.getElementById('cameraFilter');
     cameraSelect.innerHTML = '<option value="">All Cameras</option>';
     Array.from(cameras).sort().forEach(cam => {
         cameraSelect.innerHTML += `<option value="${cam}">${cam}</option>`;
+    });
+    
+    const locationSelect = document.getElementById('locationFilter');
+    locationSelect.innerHTML = '<option value="">All Locations</option>';
+    Array.from(locations).sort().forEach(loc => {
+        locationSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
     });
 }
 
@@ -2495,6 +2474,7 @@ async function refreshPhotos() {
                 if (existingIds.has(photo.photoId)) { foundExisting = true; continue; }
                 if (!photo.photoDateUtc && !photo.photoDate) continue;
                 if (photo.cameraName) cameras.add(photo.cameraName);
+                if (photo.cameraLocation) locations.add(photo.cameraLocation);
                 allPhotos.unshift(photo);
                 newPhotos.push(photo);
             }
@@ -2502,6 +2482,7 @@ async function refreshPhotos() {
             page++;
         }
         
+        populateFilters();
         await loadGalleries();
         applyFilters();
         hideLoading();
@@ -2528,20 +2509,23 @@ async function refreshPhotos() {
 
 // ============== FILTERS ==============
 function applyFilters() {
-    const galleryFilter = document.getElementById('galleryFilter').value;
-    const tagFilter = document.getElementById('tagFilter').value;
+    const locationFilter = document.getElementById('locationFilter').value;
     const cameraFilter = document.getElementById('cameraFilter').value;
+    const tagFilter = document.getElementById('tagFilter').value;
+    const galleryFilter = document.getElementById('galleryFilter').value;
+    const sortOrder = document.getElementById('sortOrder').value;
     
-    // Sort allPhotos by date (newest first)
+    // Sort allPhotos by date
     allPhotos.sort((a, b) => {
         const dateA = new Date(a.photoDateUtc || a.photoDate || 0);
         const dateB = new Date(b.photoDateUtc || b.photoDate || 0);
-        return dateB - dateA;
+        return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
     
     filteredPhotos = allPhotos.filter(photo => {
-        if (galleryFilter && (!photo.photoGroupIds || !photo.photoGroupIds.includes(galleryFilter))) return false;
+        if (locationFilter && photo.cameraLocation !== locationFilter) return false;
         if (cameraFilter && photo.cameraName !== cameraFilter) return false;
+        if (galleryFilter && (!photo.photoGroupIds || !photo.photoGroupIds.includes(galleryFilter))) return false;
         if (tagFilter === 'untagged') {
             if (photo.tagIds && photo.tagIds.length > 0) return false;
         } else if (tagFilter) {
@@ -2555,6 +2539,21 @@ function applyFilters() {
     gridDisplayCount = 100;
     renderGrid();
     updateBulkActionBar();
+    updatePhotoCount();
+    
+    // Also update dashboard charts if on dashboard tab
+    if (document.getElementById('dashboardContent').classList.contains('active')) {
+        applyDashboardFilters();
+    }
+}
+
+function clearFilters() {
+    document.getElementById('locationFilter').value = '';
+    document.getElementById('cameraFilter').value = '';
+    document.getElementById('tagFilter').value = '';
+    document.getElementById('galleryFilter').value = '';
+    document.getElementById('sortOrder').value = 'newest';
+    applyFilters();
 }
 
 // ============== PHOTO DISPLAY ==============
@@ -3157,40 +3156,35 @@ let dashboardPhotos = [];
 function populateDashboardFilters() {
     const cameras = new Set();
     const locations = new Set();
-    const names = new Set();
     
     dashboardPhotos.forEach(photo => {
         if (photo.camera) cameras.add(photo.camera);
         if (photo.location) locations.add(photo.location);
-        if (photo.name) {
-            photo.name.split(', ').forEach(n => { if (n) names.add(n); });
-        }
     });
     
-    const cameraSelect = document.getElementById('dashCameraFilter');
-    cameraSelect.innerHTML = '<option value="">All Cameras</option>';
-    Array.from(cameras).sort().forEach(cam => {
-        cameraSelect.innerHTML += `<option value="${cam}">${cam}</option>`;
-    });
+    // Populate unified camera filter (if not already populated from photos)
+    const cameraSelect = document.getElementById('cameraFilter');
+    if (cameraSelect.options.length <= 1) {
+        cameraSelect.innerHTML = '<option value="">All Cameras</option>';
+        Array.from(cameras).sort().forEach(cam => {
+            cameraSelect.innerHTML += `<option value="${cam}">${cam}</option>`;
+        });
+    }
     
-    const locationSelect = document.getElementById('dashLocationFilter');
-    locationSelect.innerHTML = '<option value="">All Locations</option>';
-    Array.from(locations).sort().forEach(loc => {
-        locationSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
-    });
-    
-    const nameSelect = document.getElementById('dashNameFilter');
-    nameSelect.innerHTML = '<option value="">All Names</option>';
-    Array.from(names).sort().forEach(name => {
-        nameSelect.innerHTML += `<option value="${name}">${name}</option>`;
-    });
+    // Populate unified location filter
+    const locationSelect = document.getElementById('locationFilter');
+    if (locationSelect.options.length <= 1) {
+        locationSelect.innerHTML = '<option value="">All Locations</option>';
+        Array.from(locations).sort().forEach(loc => {
+            locationSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
+        });
+    }
 }
 
 function applyDashboardFilters() {
-    const cameraFilter = document.getElementById('dashCameraFilter').value;
-    const locationFilter = document.getElementById('dashLocationFilter').value;
-    const nameFilter = document.getElementById('dashNameFilter').value;
-    const tagFilter = document.getElementById('dashTagFilter').value;
+    const cameraFilter = document.getElementById('cameraFilter').value;
+    const locationFilter = document.getElementById('locationFilter').value;
+    const tagFilter = document.getElementById('tagFilter').value;
     
     // Map tag filter value to animalType
     const tagToType = {
@@ -3198,7 +3192,7 @@ function applyDashboardFilters() {
         'Predator': 'predator', 'Bird': 'bird', 'Human': 'human',
         'Vehicle/ATV': 'vehicle', 'Other': 'other_tagged', 'No Animals': 'no_animals'
     };
-    const filterType = tagFilter ? tagToType[tagFilter] : null;
+    const filterType = tagFilter && tagFilter !== 'untagged' ? tagToType[tagFilter] : null;
     
     // Build filtered arrays for each tag type
     const filteredArrays = {};
@@ -3206,7 +3200,6 @@ function applyDashboardFilters() {
     dashboardPhotos.forEach(photo => {
         if (cameraFilter && photo.camera !== cameraFilter) return;
         if (locationFilter && photo.location !== locationFilter) return;
-        if (nameFilter && (!photo.name || !photo.name.includes(nameFilter))) return;
         if (filterType && photo.animalType !== filterType) return;
         
         const point = {
@@ -3244,14 +3237,6 @@ function applyDashboardFilters() {
     
     // Update weather chart with filtered data
     updateWeatherChart();
-}
-
-function clearDashboardFilters() {
-    document.getElementById('dashCameraFilter').value = '';
-    document.getElementById('dashLocationFilter').value = '';
-    document.getElementById('dashNameFilter').value = '';
-    document.getElementById('dashTagFilter').value = '';
-    applyDashboardFilters();
 }
 
 async function initializeDashboard() {
@@ -4530,11 +4515,10 @@ function updateWeatherChart() {
 function calculateWeatherDistribution(field) {
     let categories, dayCounts, nightCounts, title;
     
-    // Get current filter values
-    const cameraFilter = document.getElementById('dashCameraFilter')?.value || '';
-    const locationFilter = document.getElementById('dashLocationFilter')?.value || '';
-    const nameFilter = document.getElementById('dashNameFilter')?.value || '';
-    const tagFilter = document.getElementById('dashTagFilter')?.value || '';
+    // Get current filter values from unified filters
+    const cameraFilter = document.getElementById('cameraFilter')?.value || '';
+    const locationFilter = document.getElementById('locationFilter')?.value || '';
+    const tagFilter = document.getElementById('tagFilter')?.value || '';
     
     // Map tag filter to type
     const tagToType = {
@@ -4542,13 +4526,12 @@ function calculateWeatherDistribution(field) {
         'Predator': 'predator', 'Bird': 'bird', 'Human': 'human',
         'Vehicle/ATV': 'vehicle', 'Other': 'other_tagged', 'No Animals': 'no_animals'
     };
-    const filterType = tagFilter ? tagToType[tagFilter] : null;
+    const filterType = tagFilter && tagFilter !== 'untagged' ? tagToType[tagFilter] : null;
     
     // Filter photos based on current filters
     const filteredPhotos = dashboardPhotos.filter(photo => {
         if (cameraFilter && photo.camera !== cameraFilter) return false;
         if (locationFilter && photo.location !== locationFilter) return false;
-        if (nameFilter && (!photo.name || !photo.name.includes(nameFilter))) return false;
         if (filterType && photo.animalType !== filterType) return false;
         return true;
     });
