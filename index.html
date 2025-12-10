@@ -796,7 +796,6 @@
                             <!-- Activity Prediction -->
                             <div class="col-md-6">
                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                                    <label class="text-muted small me-2">Activity Prediction:</label>
                                     <select id="predictionAnimalFilter" class="form-select form-select-sm w-auto" onchange="updatePredictionChart()">
                                         <option value="all">All Deer</option>
                                         <option value="buck">Buck</option>
@@ -824,7 +823,6 @@
                             </div>
                             <!-- Forecast -->
                             <div class="col-md-6">
-                                <label class="text-muted small mb-2 d-block">10-Day Forecast & Current Conditions:</label>
                                 <div id="currentConditions" class="d-flex gap-3 p-2 mb-2 rounded flex-wrap" style="background: #333; font-size: 11px;">
                                     <div class="text-muted">Loading current conditions...</div>
                                 </div>
@@ -2515,16 +2513,17 @@ async function updateLocationFromPhotos() {
     // Reverse geocode to get city/town name
     try {
         const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${CONFIG.fixedLat}&lon=${CONFIG.fixedLng}&zoom=10`,
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${CONFIG.fixedLat}&lon=${CONFIG.fixedLng}&zoom=14`,
             { headers: { 'User-Agent': 'TrailCamHQ/1.0' } }
         );
         
         if (response.ok) {
             const data = await response.json();
             const address = data.address || {};
+            console.log('Reverse geocode address:', address);
             
             // Try to get city/town/village name
-            const city = address.city || address.town || address.village || address.municipality || address.county || '';
+            const city = address.city || address.town || address.village || address.municipality || '';
             const state = address.state || '';
             
             if (city) {
@@ -3467,10 +3466,6 @@ function updateCurrentConditions(current) {
     const container = document.getElementById('currentConditions');
     container.innerHTML = `
         <div style="text-align: center;">
-            <div style="color: #888; font-size: 11px;">📍 Location</div>
-            <div style="color: #fff; font-size: 14px; font-weight: bold;">${CONFIG.fixedLocationName}</div>
-        </div>
-        <div style="text-align: center;">
             <div style="color: #888; font-size: 11px;">TEMP</div>
             <div style="color: #F4D03F; font-size: 20px; font-weight: bold;">${Math.round(current.temperature_2m)}°F</div>
         </div>
@@ -3528,7 +3523,8 @@ function createForecastChart(days) {
         accessibility: { enabled: false },
         
         title: {
-            text: null
+            text: '10-Day Forecast - ' + CONFIG.fixedLocationName,
+            style: { color: '#E0E0E3' }
         },
         
         xAxis: {
@@ -3887,7 +3883,10 @@ function createPredictionChart() {
         },
         accessibility: { enabled: false },
         
-        title: { text: null },
+        title: { 
+            text: 'Activity Prediction',
+            style: { color: '#E0E0E3' }
+        },
         
         xAxis: {
             categories: categories,
@@ -4010,12 +4009,12 @@ function updateOptimalConditions() {
     const animalLabel = animalFilter === 'buck' ? 'Buck' : animalFilter === 'doe' ? 'Doe' : 'Deer';
     
     document.getElementById('optimalConditions').innerHTML = `
-        <span class="text-muted">Optimal for ${animalLabel} (${rates.total} photos):</span>
-        <span class="ms-3" style="opacity: ${weights.pressure > 0 ? 1 : 0.4};"><span style="color: #AF7AC5;">Press:</span> <b>${pressureLabels[bestPressure]}</b></span>
-        <span class="ms-3" style="opacity: ${weights.temp > 0 ? 1 : 0.4};"><span style="color: #F4D03F;">Temp:</span> <b>${tempLabels[bestTemp]}</b></span>
-        <span class="ms-3" style="opacity: ${weights.windDir > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">WDir:</span> <b>${windDirLabels[bestWindDir]}</b></span>
-        <span class="ms-3" style="opacity: ${weights.windSpeed > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">WSpd:</span> <b>${windSpeedLabels[bestWindSpeed]} mph</b></span>
-        <span class="ms-3" style="opacity: ${weights.moon > 0 ? 1 : 0.4};"><span style="color: #D4AC0D;">Moon:</span> <b>${moonLabels[bestMoon]}</b></span>
+        <span style="color: #E0E0E3;">Optimal for ${animalLabel} (${rates.total} photos):</span>
+        <span class="ms-3" style="color: #E0E0E3; opacity: ${weights.pressure > 0 ? 1 : 0.4};"><span style="color: #AF7AC5;">Press:</span> <b>${pressureLabels[bestPressure]}</b></span>
+        <span class="ms-3" style="color: #E0E0E3; opacity: ${weights.temp > 0 ? 1 : 0.4};"><span style="color: #F4D03F;">Temp:</span> <b>${tempLabels[bestTemp]}</b></span>
+        <span class="ms-3" style="color: #E0E0E3; opacity: ${weights.windDir > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">WDir:</span> <b>${windDirLabels[bestWindDir]}</b></span>
+        <span class="ms-3" style="color: #E0E0E3; opacity: ${weights.windSpeed > 0 ? 1 : 0.4};"><span style="color: #7FB3D5;">WSpd:</span> <b>${windSpeedLabels[bestWindSpeed]} mph</b></span>
+        <span class="ms-3" style="color: #E0E0E3; opacity: ${weights.moon > 0 ? 1 : 0.4};"><span style="color: #D4AC0D;">Moon:</span> <b>${moonLabels[bestMoon]}</b></span>
     `;
 }
 
