@@ -332,6 +332,13 @@
             padding: 12px 15px;
             background: var(--bg-card);
             border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .zoom-info-text {
+            flex: 1;
         }
         
         .zoom-info .info-line {
@@ -406,19 +413,6 @@
         .zoom-none-btn:hover {
             border-color: var(--accent-red);
             background: rgba(220, 38, 38, 0.1);
-        }
-        
-        .zoom-bottom-row {
-            width: 100%;
-            justify-content: center;
-        }
-        
-        .zoom-divider {
-            color: #555;
-            font-size: 20px;
-            padding: 0 8px;
-            display: flex;
-            align-items: center;
         }
         
         .zoom-delete-btn {
@@ -3062,7 +3056,8 @@ function updateZoomModal() {
     
     // Build info panel (matching tooltip panel format)
     const photoDate = getPhotoDate(photo);
-    let infoHtml = '<div class="info-line">';
+    let infoHtml = '<div class="zoom-info-text">';
+    infoHtml += '<div class="info-line">';
     infoHtml += `<span class="info-label">Camera:</span> <span class="info-value">${photo.cameraName || 'Unknown'}</span>`;
     infoHtml += `<span class="info-sep">|</span>`;
     infoHtml += `<span class="info-label">Date:</span> <span class="info-value">${formatDate(photoDate)}</span>`;
@@ -3095,6 +3090,10 @@ function updateZoomModal() {
         infoHtml += `<span class="info-label">Tags:</span> <span class="info-value" style="color: var(--text-muted);">None</span>`;
     }
     infoHtml += '</div>';
+    infoHtml += '</div>';
+    
+    // Delete button on right
+    infoHtml += `<button class="zoom-delete-btn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> Delete</button>`;
     
     document.getElementById('zoomInfo').innerHTML = infoHtml;
     
@@ -3137,8 +3136,8 @@ function renderZoomTagButtons() {
     });
     html += '</div>';
     
-    // Second row of tags (None first for right-to-left order) + Delete
-    html += '<div class="zoom-tag-row zoom-bottom-row">';
+    // Second row of tags (None first for right-to-left order)
+    html += '<div class="zoom-tag-row">';
     // None button to clear tags
     html += `<button class="zoom-tag-btn zoom-none-btn" data-tag="__none__" onclick="zoomClearTag()">🚫 None</button>`;
     bottomRow.forEach(tagName => {
@@ -3147,9 +3146,6 @@ function renderZoomTagButtons() {
             html += `<button class="zoom-tag-btn" data-tag="${tagName}" onclick="zoomTagPhoto('${tagName}')">${icon} ${tagName}</button>`;
         }
     });
-    // Divider and Delete button
-    html += `<span class="zoom-divider">|</span>`;
-    html += `<button class="zoom-delete-btn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> Delete</button>`;
     html += '</div>';
     
     actionsDiv.innerHTML = html;
