@@ -355,8 +355,10 @@
         .zoom-right-section {
             flex: 1;
             display: flex;
+            flex-direction: column;
             justify-content: flex-end;
             align-items: flex-end;
+            gap: 8px;
         }
         
         .zoom-download-btn {
@@ -373,6 +375,23 @@
         
         .zoom-download-btn:hover {
             background: var(--accent-blue);
+            color: #fff;
+        }
+        
+        .zoom-gallery-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--accent-green);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--accent-green);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .zoom-gallery-btn:hover {
+            background: var(--accent-green);
             color: #fff;
         }
         
@@ -808,6 +827,9 @@
                                     <button class="btn btn-success btn-sm" onclick="openBulkGalleryModal()">
                                         <i class="bi bi-folder-plus me-1"></i>Add to Gallery
                                     </button>
+                                    <button class="btn btn-info btn-sm" onclick="bulkDownload()">
+                                        <i class="bi bi-download me-1"></i>Download
+                                    </button>
                                     <button class="btn btn-danger btn-sm" onclick="openBulkDeleteModal()">
                                         <i class="bi bi-trash me-1"></i>Delete
                                     </button>
@@ -1070,6 +1092,7 @@
             <div class="zoom-left-spacer"></div>
             <div class="zoom-actions" id="zoomActions"></div>
             <div class="zoom-right-section">
+                <button class="zoom-gallery-btn" onclick="openGalleryModal()"><i class="bi bi-folder-plus"></i> Gallery</button>
                 <button class="zoom-download-btn" onclick="zoomDownloadPhoto()"><i class="bi bi-download"></i> Download</button>
             </div>
         </div>
@@ -2879,8 +2902,8 @@ function populateGalleryGrids() {
                 <div class="card h-100" style="cursor:pointer;" onclick="selectGalleryFromModal('${g.photoGroupId}')">
                     ${g.photoUrl ? `<img src="${g.photoUrl}" class="card-img-top" style="height:100px;object-fit:cover;">` : `<div class="card-img-top d-flex align-items-center justify-content-center" style="height:100px;background:#333;"><i class="bi bi-folder text-muted" style="font-size:2rem;"></i></div>`}
                     <div class="card-body py-2">
-                        <div class="card-title mb-0 small">${g.name}</div>
-                        <small class="text-muted">${g.count} photos</small>
+                        <div class="card-title mb-0 small" style="color: var(--accent-green);">${g.name}</div>
+                        <small class="text-light">${g.count} photos</small>
                     </div>
                 </div>
             </div>
@@ -2962,6 +2985,69 @@ async function confirmBulkDelete() {
     hideLoading();
     clearSelection();
     applyFilters();
+}
+
+async function bulkDownload() {
+    if (selectedPhotos.size === 0) {
+        alert('No photos selected');
+        return;
+    }
+    
+    const photos = allPhotos.filter(p => selectedPhotos.has(p.photoId));
+    const total = photos.length;
+    let downloaded = 0;
+    let failed = 0;
+    
+    showLoading(`Downloading ${total} photos...`);
+    
+    for (const photo of photos) {
+        try {
+            // Use Apps Script proxy to bypass CORS
+            const proxyUrl = `${CONFIG.googleSheetsUrl}?action=downloadImage&url=${encodeURIComponent(photo.photoUrl)}`;
+            const response = await fetch(proxyUrl);
+            const result = await response.json();
+            
+            if (!result.success) {
+                failed++;
+                continue;
+            }
+            
+            // Decode base64 to blob
+            const byteCharacters = atob(result.data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: result.contentType || 'image/jpeg' });
+            
+            // Trigger download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const photoDate = getPhotoDate(photo);
+            const dateStr = photoDate ? new Date(photoDate).toISOString().split('T')[0] : 'unknown';
+            a.download = `${photo.cameraName || 'photo'}_${dateStr}_${downloaded + 1}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            downloaded++;
+            showLoading(`Downloading ${downloaded}/${total} photos...`);
+            
+            // Small delay between downloads
+            await new Promise(r => setTimeout(r, 500));
+        } catch (err) {
+            console.error('Download error:', err);
+            failed++;
+        }
+    }
+    
+    hideLoading();
+    if (failed > 0) {
+        alert(`Downloaded ${downloaded} photos. ${failed} failed.`);
+    }
 }
 
 // ============== QUICK TAG ZOOM MODAL ==============
