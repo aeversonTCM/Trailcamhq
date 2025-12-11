@@ -1215,26 +1215,29 @@ async function checkHqAccess() {
     }
     
     document.getElementById('hqError').style.display = 'none';
+    
+    // Hide HQ Gate immediately and show loading
+    document.getElementById('hqGate').style.display = 'none';
     showLoading('Verifying access...');
     
     try {
         const response = await fetch(`${CONFIG.googleSheetsUrl}?action=verifyAccess&code=${encodeURIComponent(code)}`);
         const result = await response.json();
         
-        hideLoading();
-        
         if (result.access === 'admin' || result.access === 'viewer') {
             accessLevel = result.access;
             sessionStorage.setItem('hqAccess', accessLevel);
-            document.getElementById('hqGate').style.display = 'none';
-            // Go directly to login
+            // Go directly to login (loading already shown)
             adminQuickLogin();
         } else {
+            hideLoading();
+            document.getElementById('hqGate').style.display = 'flex';
             document.getElementById('hqError').style.display = 'block';
             document.getElementById('hqPassword').value = '';
         }
     } catch (error) {
         hideLoading();
+        document.getElementById('hqGate').style.display = 'flex';
         console.error('Access check error:', error);
         document.getElementById('hqError').textContent = 'Connection error. Try again.';
         document.getElementById('hqError').style.display = 'block';
@@ -1243,6 +1246,9 @@ async function checkHqAccess() {
 
 async function adminQuickLogin() {
     showLoading('Connecting...');
+    
+    // Minimum delay for 3 loading animation cycles (~4.5 seconds)
+    const minDelayPromise = new Promise(resolve => setTimeout(resolve, 4500));
     
     try {
         // Get stored credentials from Apps Script
@@ -1277,6 +1283,9 @@ async function adminQuickLogin() {
         
         // Defer local cache saves during login - we'll do one save at the end
         deferLocalCacheSave = true;
+        
+        // Wait for minimum delay before continuing
+        await minDelayPromise;
         
         // Initialize app (loads from cache)
         await initializeApp();
@@ -1402,7 +1411,12 @@ function applyAccessLevel() {
 }
 
 async function viewOnlyLogin() {
+    // Hide HQ Gate immediately
+    document.getElementById('hqGate').style.display = 'none';
     showLoading('Connecting...');
+    
+    // Minimum delay for 3 loading animation cycles (~4.5 seconds)
+    const minDelayPromise = new Promise(resolve => setTimeout(resolve, 4500));
     
     try {
         // Step 1: Get stored credentials from Apps Script
@@ -1437,9 +1451,10 @@ async function viewOnlyLogin() {
         localStorage.setItem('trailcam_token', accessToken);
         localStorage.setItem('trailcam_email', 'QuickView');
         
-        // Hide HQ Gate
-        document.getElementById('hqGate').style.display = 'none';
         applyAccessLevel();
+        
+        // Wait for minimum delay before continuing
+        await minDelayPromise;
         
         // Step 3: Initialize app (loads from cache)
         await initializeApp();
