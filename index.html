@@ -2929,14 +2929,18 @@ function populateGalleryGrids() {
 
 function openGalleryModal() { 
     if (filteredPhotos.length > 0) {
+        const fromZoom = zoomModalOpen;
         galleryModalInstance.show();
         // Add lighter backdrop when opening from zoom modal
-        if (zoomModalOpen) {
-            setTimeout(() => {
+        if (fromZoom) {
+            const galleryEl = document.getElementById('galleryModal');
+            galleryEl.addEventListener('shown.bs.modal', function handler() {
                 const backdrops = document.querySelectorAll('.modal-backdrop');
-                const lastBackdrop = backdrops[backdrops.length - 1];
-                if (lastBackdrop) lastBackdrop.classList.add('gallery-from-zoom');
-            }, 10);
+                if (backdrops.length > 0) {
+                    backdrops[backdrops.length - 1].classList.add('gallery-from-zoom');
+                }
+                galleryEl.removeEventListener('shown.bs.modal', handler);
+            });
         }
     }
 }
