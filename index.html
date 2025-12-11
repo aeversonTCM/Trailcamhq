@@ -665,7 +665,7 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#accountContent" type="button" role="tab">
-                    <i class="bi bi-gear me-1"></i>Account
+                    <i class="bi bi-gear me-1"></i>Settings
                 </button>
             </li>
         </ul>
@@ -674,12 +674,6 @@
             <span class="text-light small" id="cacheStatus" style="display: none; opacity: 0.5;">
                 <i class="bi bi-hdd me-1"></i><span id="cacheStatusText">Local</span>
             </span>
-            <button class="btn btn-outline-info btn-sm" id="cloudSyncBtn" onclick="syncToCloudBackup()" style="display: none;" title="Sync to Cloud Backup">
-                <i class="bi bi-cloud-upload"></i>
-            </button>
-            <button class="btn btn-outline-danger btn-sm" id="fullRefreshBtn" onclick="fullRefresh()" style="display: none;" title="Full Refresh - Clear ALL Cache & Reload from Reveal">
-                <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
             <span class="text-light" id="userDisplay" style="display: none; opacity: 0.5;">
                 <i class="bi bi-person-circle me-1"></i><span id="userName"></span>
             </span>
@@ -988,12 +982,12 @@
             </div>
         </div>
         
-        <!-- Account Tab -->
+        <!-- Settings Tab -->
         <div class="tab-pane fade" id="accountContent" role="tabpanel">
             <div class="container-fluid py-3">
                 <div class="row justify-content-center">
                     <div class="col-lg-8">
-                        <h4 class="mb-4"><i class="bi bi-gear me-2"></i>Account Settings</h4>
+                        <h4 class="mb-4"><i class="bi bi-gear me-2"></i>Settings</h4>
                         
                         <!-- Camera Services Section -->
                         <div class="card mb-4">
@@ -1091,6 +1085,29 @@
                                     <button class="btn btn-outline-danger btn-sm" onclick="clearLocalCache()">
                                         <i class="bi bi-trash me-1"></i>Clear Cache
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Data Management -->
+                        <div class="card mb-4 admin-only">
+                            <div class="card-header">
+                                <i class="bi bi-arrow-repeat me-2"></i>Data Management
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap gap-3">
+                                    <div>
+                                        <button class="btn btn-outline-info btn-sm" id="cloudSyncBtn" onclick="syncToCloudBackup()" style="display: none;" title="Sync to Cloud Backup">
+                                            <i class="bi bi-cloud-upload me-1"></i>Sync to Cloud
+                                        </button>
+                                        <small class="d-block text-muted mt-1">Upload local data to cloud backup</small>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-outline-danger btn-sm" id="fullRefreshBtn" onclick="fullRefresh()" style="display: none;" title="Full Refresh - Clear ALL Cache & Reload from Reveal">
+                                            <i class="bi bi-arrow-clockwise me-1"></i>Full Refresh
+                                        </button>
+                                        <small class="d-block text-muted mt-1">Clear cache & reload from Reveal</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1629,7 +1646,7 @@ async function loadFromAPI() {
 }
 
 function updatePhotoCount() {
-    document.getElementById('totalCount').textContent = filteredPhotos.length;
+    document.getElementById('totalCount').textContent = filteredPhotos.length.toLocaleString();
 }
 
 // ============== AUTH ==============
