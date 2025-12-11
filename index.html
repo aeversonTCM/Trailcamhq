@@ -3242,8 +3242,28 @@ async function zoomDownloadPhoto() {
     btn.disabled = true;
     
     try {
-        const response = await fetch(photo.photoUrl);
+        console.log('Fetching URL:', photo.photoUrl);
+        
+        const response = await fetch(photo.photoUrl, {
+            method: 'GET',
+            mode: 'cors'
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        console.log('Response headers:', [...response.headers.entries()]);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const blob = await response.blob();
+        console.log('Blob size:', blob.size, 'type:', blob.type);
+        
+        if (blob.size === 0) {
+            throw new Error('Downloaded file is empty');
+        }
+        
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -3255,8 +3275,8 @@ async function zoomDownloadPhoto() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     } catch (err) {
-        console.error('Error downloading photo:', err);
-        alert('Failed to download photo: ' + err.message);
+        console.error('Download error:', err);
+        alert('Failed to download: ' + err.message);
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
