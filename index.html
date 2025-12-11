@@ -3734,6 +3734,7 @@ function applyDashboardFilters() {
             x: photo.dateMs,
             y: photo.timeMs,
             camera: photo.camera,
+            location: photo.location,
             label: photo.name,
             photoId: photo.photoId,
             photoUrl: photo.photoUrl,
@@ -4625,6 +4626,7 @@ async function processPhotosForChart() {
             x: photo.dateMs,
             y: photo.timeMs,
             camera: photo.camera,
+            location: photo.location,
             label: photo.name,
             photoId: photo.photoId,
             photoUrl: photo.photoUrl,
@@ -5852,6 +5854,7 @@ function updateTooltipPanel(point) {
     if (!camera) return;
     
     const photoUrl = point.photoUrl || point.options?.photoUrl;
+    const location = point.location || point.options?.location;
     const label = point.label || point.options?.label;
     const windSpeed = point.windSpeed ?? point.options?.windSpeed;
     const windDirection = point.windDirection ?? point.options?.windDirection;
@@ -5863,20 +5866,24 @@ function updateTooltipPanel(point) {
         html += `<img src="${photoUrl}" alt="Trail cam photo" />`;
     }
     
-    // Line 1: Camera | Time
+    // Line 1: Location | Camera
     html += `<div class="info-line">`;
-    html += `<span class="info-label">Camera:</span> <span class="info-value">${camera}</span>`;
-    html += `<span class="info-sep">|</span>`;
-    html += `<span class="info-label">Time:</span> <span class="info-value">${Highcharts.dateFormat('%l:%M %P', point.y)}</span>`;
-    html += `</div>`;
-    
-    // Line 2: Wind | Date | Name
-    html += `<div class="info-line">`;
-    if (windSpeed !== '' && windSpeed !== undefined && windDirection !== '' && windDirection !== undefined) {
-        html += `<span class="info-label">Wind:</span> <span class="info-value">${getWindDirection(windDirection)} at ${windSpeed}mph</span>`;
+    if (location) {
+        html += `<span class="info-label">Location:</span> <span class="info-value">${location}</span>`;
         html += `<span class="info-sep">|</span>`;
     }
+    html += `<span class="info-label">Camera:</span> <span class="info-value">${camera}</span>`;
+    html += `</div>`;
+    
+    // Line 2: Date | Time | Wind | Name
+    html += `<div class="info-line">`;
     html += `<span class="info-label">Date:</span> <span class="info-value">${Highcharts.dateFormat('%b %d', point.x)}</span>`;
+    html += `<span class="info-sep">|</span>`;
+    html += `<span class="info-label">Time:</span> <span class="info-value">${Highcharts.dateFormat('%l:%M %P', point.y)}</span>`;
+    if (windSpeed !== '' && windSpeed !== undefined && windDirection !== '' && windDirection !== undefined) {
+        html += `<span class="info-sep">|</span>`;
+        html += `<span class="info-label">Wind:</span> <span class="info-value">${getWindDirection(windDirection)} at ${windSpeed}mph</span>`;
+    }
     if (label) {
         html += `<span class="info-sep">|</span>`;
         html += `<span class="info-label">Name:</span> <span class="info-name">${label}</span>`;
