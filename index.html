@@ -4848,6 +4848,28 @@ function createMainChart() {
         credits: { enabled: false }
     });
     console.log('Main chart created successfully');
+    
+    // Show most recent photo in tooltip on load
+    if (dashboardPhotos.length > 0) {
+        const mostRecent = dashboardPhotos.reduce((latest, photo) => {
+            const photoDate = new Date(photo.dateStr + 'T' + photo.timeStr);
+            const latestDate = new Date(latest.dateStr + 'T' + latest.timeStr);
+            return photoDate > latestDate ? photo : latest;
+        });
+        
+        // Create a mock point object for updateTooltipPanel
+        const mockPoint = {
+            x: mostRecent.dateMs,
+            y: mostRecent.timeMs,
+            camera: mostRecent.camera,
+            photoUrl: mostRecent.photoUrl,
+            location: mostRecent.location,
+            label: mostRecent.label,
+            windSpeed: mostRecent.windSpeed,
+            windDirection: mostRecent.windDirection
+        };
+        updateTooltipPanel(mockPoint);
+    }
     } catch (e) {
         console.error('Error creating main chart:', e);
     }
