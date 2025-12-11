@@ -6078,13 +6078,14 @@ function createPredictionChart() {
     const eveningFill = '#5D6D7E';
     const eveningBest = '#8395A7';
     const emptyColor = 'rgba(80, 80, 80, 0.3)';
-    const gapColor = '#2a2a2b'; // Card background for gaps
+    const borderColor = '#555'; // Thin grey border
     
     // Build 5 stacked series for morning and 5 for evening
+    // Start from block 0 (bottom) to block 4 (top) so they stack correctly
     const series = [];
     
     for (let block = 0; block < 5; block++) {
-        // Morning block
+        // Morning block - block 0 is bottom, block 4 is top
         series.push({
             name: block === 0 ? 'Morning' : undefined,
             linkedTo: block === 0 ? undefined : 'morning',
@@ -6093,7 +6094,7 @@ function createPredictionChart() {
             showInLegend: block === 0,
             data: morningScores.map((score, idx) => {
                 const filledBlocks = Math.floor(score / 2);
-                const isFilled = block < filledBlocks;
+                const isFilled = block < filledBlocks; // block 0 fills first, then 1, 2, etc.
                 const isBest = idx === bestMorningIdx;
                 return {
                     y: 2,
@@ -6101,8 +6102,9 @@ function createPredictionChart() {
                     dataLabels: (block === 4 && isBest) ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
                 };
             }),
-            borderWidth: 2,
-            borderColor: gapColor
+            borderWidth: 1,
+            borderColor: borderColor,
+            borderRadius: 3
         });
         
         // Evening block
@@ -6122,8 +6124,9 @@ function createPredictionChart() {
                     dataLabels: (block === 4 && isBest) ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
                 };
             }),
-            borderWidth: 2,
-            borderColor: gapColor
+            borderWidth: 1,
+            borderColor: borderColor,
+            borderRadius: 3
         });
     }
     
@@ -6155,7 +6158,8 @@ function createPredictionChart() {
             visible: false,
             gridLineWidth: 0,
             labels: { enabled: false },
-            title: { text: null }
+            title: { text: null },
+            reversedStacks: false
         },
         
         legend: {
