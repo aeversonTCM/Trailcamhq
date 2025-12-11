@@ -3064,7 +3064,7 @@ async function clearGalleryFromModal() {
         // Remove from all galleries the photo is in
         for (const galleryId of photo.photoGroupIds) {
             await fetch(`${CONFIG.apiBaseUrl}/photoGroups/${galleryId}/batchDelete`, {
-                method: 'POST',
+                method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ photoIds: [photo.photoId] })
             });
@@ -3099,7 +3099,7 @@ async function bulkClearGallery() {
         // Remove photos from each gallery
         for (const [galleryId, photoIds] of Object.entries(galleryToPhotos)) {
             await fetch(`${CONFIG.apiBaseUrl}/photoGroups/${galleryId}/batchDelete`, {
-                method: 'POST',
+                method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ photoIds })
             });
