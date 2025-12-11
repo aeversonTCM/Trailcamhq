@@ -106,6 +106,14 @@
             color: var(--text-primary);
         }
         
+        .form-control:disabled, .form-select:disabled {
+            background-color: var(--bg-input);
+            border-color: #444;
+            color: var(--text-muted);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
         .form-control:focus, .form-select:focus {
             background-color: var(--bg-input);
             border-color: var(--accent-green);
