@@ -900,20 +900,20 @@
                 <div class="card mb-4">
                     <div class="card-body py-3">
                         <div class="row align-items-center">
-                            <!-- Optimal for Deer (Left) -->
+                            <!-- Optimal Hunt (Left) -->
                             <div class="col-md-6">
                                 <div class="d-flex align-items-center gap-3 flex-wrap">
-                                    <span class="text-success fw-bold"><i class="bi bi-bullseye me-1"></i>Optimal:</span>
-                                    <div id="optimalConditions" class="d-flex gap-3 flex-wrap text-white" style="font-size: 13px;">
+                                    <span class="text-success fw-bold"><i class="bi bi-bullseye me-1"></i>Optimal Hunt:</span>
+                                    <div id="optimalConditions" class="d-flex gap-3 flex-wrap" style="font-size: 13px; color: #E0E0E3;">
                                         <span class="text-muted">Loading...</span>
                                     </div>
                                 </div>
                             </div>
                             <!-- Current Conditions (Right) -->
                             <div class="col-md-6">
-                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                <div class="d-flex align-items-center gap-3 flex-wrap justify-content-end">
                                     <span class="text-info fw-bold"><i class="bi bi-cloud-sun me-1"></i>Current:</span>
-                                    <div id="currentConditions" class="d-flex gap-3 flex-wrap text-white" style="font-size: 13px;">
+                                    <div id="currentConditions" class="d-flex gap-3 flex-wrap" style="font-size: 13px; color: #E0E0E3;">
                                         <span class="text-muted">Loading...</span>
                                     </div>
                                 </div>
@@ -4775,7 +4775,7 @@ function createMainChart() {
             title: { enabled: false },
             reversed: false
         }, {
-            top: '0%', height: '5%', min: 0, max: 1, gridLineWidth: 0, labels: { enabled: false }, title: { enabled: false }, opposite: false
+            top: '0%', height: '5%', min: 0, max: 1, gridLineWidth: 0, tickLength: 0, labels: { enabled: false }, title: { enabled: false }, opposite: false
         }],
         tooltip: {
             enabled: false  // Disable floating tooltip, we'll use the side panel
@@ -5581,10 +5581,10 @@ function updateCurrentConditions(current) {
     
     const container = document.getElementById('currentConditions');
     container.innerHTML = `
-        <span><span style="color: #AF7AC5;">Press:</span> <b>${pressure}</b></span>
-        <span><span style="color: #F4D03F;">Temp:</span> <b>${Math.round(current.temperature_2m)}°F</b></span>
-        <span><span style="color: #7FB3D5;">Wind:</span> <b>${windDir} ${Math.round(current.wind_speed_10m)}mph</b></span>
-        <span><span style="color: #D4AC0D;">Moon:</span> <b>${moonSymbol} ${moonName}</b></span>
+        <span><span style="color: #AF7AC5;">Press:</span> ${pressure}</span>
+        <span><span style="color: #F4D03F;">Temp:</span> ${Math.round(current.temperature_2m)}°F</span>
+        <span><span style="color: #7FB3D5;">Wind:</span> ${windDir} at ${Math.round(current.wind_speed_10m)}mph</span>
+        <span><span style="color: #D4AC0D;">Moon:</span> ${moonSymbol} ${moonName}</span>
     `;
 }
 
@@ -6106,10 +6106,10 @@ function updateOptimalConditions() {
     const bestMoon = rates.moonPhase.indexOf(Math.max(...rates.moonPhase));
     
     document.getElementById('optimalConditions').innerHTML = `
-        <span><span style="color: #AF7AC5;">Press:</span> <b>${pressureRange}</b></span>
-        <span><span style="color: #F4D03F;">Temp:</span> <b>${tempRange}</b></span>
-        <span><span style="color: #7FB3D5;">Wind:</span> <b>${windDirLabels[bestWindDir]} ${windSpeedLabels[bestWindSpeed]}mph</b></span>
-        <span><span style="color: #D4AC0D;">Moon:</span> <b>${moonLabels[bestMoon]}</b></span>
+        <span><span style="color: #AF7AC5;">Press:</span> ${pressureRange}</span>
+        <span><span style="color: #F4D03F;">Temp:</span> ${tempRange}</span>
+        <span><span style="color: #7FB3D5;">Wind:</span> ${windDirLabels[bestWindDir]} at ${windSpeedLabels[bestWindSpeed]}mph</span>
+        <span><span style="color: #D4AC0D;">Moon:</span> ${moonLabels[bestMoon]}</span>
     `;
 }
 
