@@ -6090,15 +6090,34 @@ function createPredictionChart() {
     const bestMorningTopBlock = Math.floor(morningScores[bestMorningIdx] / 2) - 1;
     const bestEveningTopBlock = Math.floor(eveningScores[bestEveningIdx] / 2) - 1;
     
-    // Track if star has been placed
-    let morningStarPlaced = false;
-    let eveningStarPlaced = false;
+    console.log('Morning scores:', morningScores);
+    console.log('Evening scores:', eveningScores);
+    console.log('Best morning idx:', bestMorningIdx, 'top block:', bestMorningTopBlock);
+    console.log('Best evening idx:', bestEveningIdx, 'top block:', bestEveningTopBlock);
     
     for (let block = 0; block < 5; block++) {
         const low = block * 2 + (gap / 2);
         const high = (block + 1) * 2 - (gap / 2);
         
-        // Morning segments
+        // Morning segments - star only on bestMorningIdx at bestMorningTopBlock
+        const morningData = [];
+        for (let idx = 0; idx < morningScores.length; idx++) {
+            const score = morningScores[idx];
+            const filledBlocks = Math.floor(score / 2);
+            if (block >= filledBlocks) {
+                morningData.push(null);
+                continue;
+            }
+            const showStar = (idx === bestMorningIdx) && (block === bestMorningTopBlock);
+            morningData.push({
+                x: idx,
+                low: low,
+                high: high,
+                color: (idx === bestMorningIdx) ? morningBest : morningFill,
+                dataLabels: showStar ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
+            });
+        }
+        
         series.push({
             name: block === 0 ? 'Morning' : undefined,
             linkedTo: block === 0 ? undefined : 'morning',
@@ -6110,27 +6129,31 @@ function createPredictionChart() {
             pointWidth: 18,
             grouping: false,
             dataLabels: { enabled: false },
-            data: morningScores.map((score, idx) => {
-                const filledBlocks = Math.floor(score / 2);
-                if (block >= filledBlocks) return null;
-                const isBest = idx === bestMorningIdx;
-                // Star only on the top block of the best morning day, and only once
-                const showStar = isBest && block === bestMorningTopBlock && !morningStarPlaced;
-                if (showStar) morningStarPlaced = true;
-                return {
-                    x: idx,
-                    low: low,
-                    high: high,
-                    color: isBest ? morningBest : morningFill,
-                    dataLabels: showStar ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
-                };
-            }),
+            data: morningData,
             borderWidth: 1,
             borderColor: borderColor,
             borderRadius: 3
         });
         
-        // Evening segments
+        // Evening segments - star only on bestEveningIdx at bestEveningTopBlock
+        const eveningData = [];
+        for (let idx = 0; idx < eveningScores.length; idx++) {
+            const score = eveningScores[idx];
+            const filledBlocks = Math.floor(score / 2);
+            if (block >= filledBlocks) {
+                eveningData.push(null);
+                continue;
+            }
+            const showStar = (idx === bestEveningIdx) && (block === bestEveningTopBlock);
+            eveningData.push({
+                x: idx,
+                low: low,
+                high: high,
+                color: (idx === bestEveningIdx) ? eveningBest : eveningFill,
+                dataLabels: showStar ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
+            });
+        }
+        
         series.push({
             name: block === 0 ? 'Evening' : undefined,
             linkedTo: block === 0 ? undefined : 'evening',
@@ -6142,21 +6165,7 @@ function createPredictionChart() {
             pointWidth: 18,
             grouping: false,
             dataLabels: { enabled: false },
-            data: eveningScores.map((score, idx) => {
-                const filledBlocks = Math.floor(score / 2);
-                if (block >= filledBlocks) return null;
-                const isBest = idx === bestEveningIdx;
-                // Star only on the top block of the best evening day, and only once
-                const showStar = isBest && block === bestEveningTopBlock && !eveningStarPlaced;
-                if (showStar) eveningStarPlaced = true;
-                return {
-                    x: idx,
-                    low: low,
-                    high: high,
-                    color: isBest ? eveningBest : eveningFill,
-                    dataLabels: showStar ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
-                };
-            }),
+            data: eveningData,
             borderWidth: 1,
             borderColor: borderColor,
             borderRadius: 3
