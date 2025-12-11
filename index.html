@@ -474,6 +474,25 @@
             border-color: #666;
         }
         
+        .weather-field-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 2px 8px;
+            transition: color 0.15s;
+        }
+        
+        .weather-field-btn:hover {
+            color: #aaa;
+        }
+        
+        .weather-field-btn.active {
+            color: #17a2b8;
+            font-weight: 600;
+        }
+        
         .zoom-none-btn:hover {
             border-color: var(--accent-red);
             background: rgba(220, 38, 38, 0.1);
@@ -960,15 +979,13 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 d-flex flex-column align-items-center">
-                                <div class="mb-2">
-                                    <span class="text-muted small me-2">Photos by:</span>
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-outline-secondary active" id="btnWindDirection" onclick="selectWeatherField('windDirection')">Wind Dir</button>
-                                        <button type="button" class="btn btn-outline-secondary" id="btnWindSpeed" onclick="selectWeatherField('windSpeed')">Wind Spd</button>
-                                        <button type="button" class="btn btn-outline-secondary" id="btnTemperature" onclick="selectWeatherField('temperature')">Temp</button>
-                                        <button type="button" class="btn btn-outline-secondary" id="btnPressure" onclick="selectWeatherField('pressure')">Press</button>
-                                        <button type="button" class="btn btn-outline-secondary" id="btnMoonPhase" onclick="selectWeatherField('moonPhase')">Moon</button>
-                                    </div>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="text-muted small">Photos by:</span>
+                                    <button type="button" class="weather-field-btn active" id="btnWindDirection" onclick="selectWeatherField('windDirection')">Wind Dir</button>
+                                    <button type="button" class="weather-field-btn" id="btnWindSpeed" onclick="selectWeatherField('windSpeed')">Wind Spd</button>
+                                    <button type="button" class="weather-field-btn" id="btnTemperature" onclick="selectWeatherField('temperature')">Temp</button>
+                                    <button type="button" class="weather-field-btn" id="btnPressure" onclick="selectWeatherField('pressure')">Press</button>
+                                    <button type="button" class="weather-field-btn" id="btnMoonPhase" onclick="selectWeatherField('moonPhase')">Moon</button>
                                 </div>
                                 <div id="chart_weather"></div>
                             </div>
