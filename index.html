@@ -6077,14 +6077,11 @@ function createPredictionChart() {
     const eveningFill = '#5D6D7E';
     const borderColor = '#555';
     
-    // Build columnrange series - each segment is independently positioned
-    // 10 segments: 0-1, 1-2, 2-3, etc. with small gaps
+    // Build columnrange series - each segment is an individual point
+    // 10 segments per bar: each score point gets 1 segment
     const gap = 0.15;
     
-    const series = [];
-    
     // Calculate the top block index for best days (for star placement)
-    // Now using 10 blocks, so divide score by 1 instead of 2
     const bestMorningTopBlock = morningScores[bestMorningIdx] - 1;
     const bestEveningTopBlock = eveningScores[bestEveningIdx] - 1;
     
@@ -6093,78 +6090,65 @@ function createPredictionChart() {
     console.log('Best morning idx:', bestMorningIdx, 'top block:', bestMorningTopBlock);
     console.log('Best evening idx:', bestEveningIdx, 'top block:', bestEveningTopBlock);
     
-    for (let block = 0; block < 10; block++) {
-        const low = block * 1 + (gap / 2);
-        const high = (block + 1) * 1 - (gap / 2);
-        
-        // Morning segments - star only on bestMorningIdx at bestMorningTopBlock
-        const morningData = [];
-        for (let idx = 0; idx < morningScores.length; idx++) {
-            const score = morningScores[idx];
-            const filledBlocks = score; // Now 1 block per score point
-            if (block >= filledBlocks) {
-                morningData.push(null);
-                continue;
-            }
+    // Build all morning segments as one series
+    const morningData = [];
+    for (let idx = 0; idx < morningScores.length; idx++) {
+        const score = morningScores[idx];
+        for (let block = 0; block < score; block++) {
+            const low = block + (gap / 2);
+            const high = (block + 1) - (gap / 2);
             const showStar = (idx === bestMorningIdx) && (block === bestMorningTopBlock);
             morningData.push({
                 x: idx,
                 low: low,
                 high: high,
-                color: morningFill,
                 dataLabels: showStar ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
             });
         }
-        
-        series.push({
-            name: block === 0 ? 'Morning' : undefined,
-            type: 'columnrange',
-            showInLegend: block === 0,
-            color: morningFill,
-            pointPlacement: -0.12,
-            pointWidth: 22,
-            grouping: false,
-            dataLabels: { enabled: false },
-            data: morningData,
-            borderWidth: 1,
-            borderColor: borderColor,
-            borderRadius: 3
-        });
-        
-        // Evening segments - star only on bestEveningIdx at bestEveningTopBlock
-        const eveningData = [];
-        for (let idx = 0; idx < eveningScores.length; idx++) {
-            const score = eveningScores[idx];
-            const filledBlocks = score; // Now 1 block per score point
-            if (block >= filledBlocks) {
-                eveningData.push(null);
-                continue;
-            }
+    }
+    
+    // Build all evening segments as one series
+    const eveningData = [];
+    for (let idx = 0; idx < eveningScores.length; idx++) {
+        const score = eveningScores[idx];
+        for (let block = 0; block < score; block++) {
+            const low = block + (gap / 2);
+            const high = (block + 1) - (gap / 2);
             const showStar = (idx === bestEveningIdx) && (block === bestEveningTopBlock);
             eveningData.push({
                 x: idx,
                 low: low,
                 high: high,
-                color: eveningFill,
                 dataLabels: showStar ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
             });
         }
-        
-        series.push({
-            name: block === 0 ? 'Evening' : undefined,
-            type: 'columnrange',
-            showInLegend: block === 0,
-            color: eveningFill,
-            pointPlacement: 0.12,
-            pointWidth: 22,
-            grouping: false,
-            dataLabels: { enabled: false },
-            data: eveningData,
-            borderWidth: 1,
-            borderColor: borderColor,
-            borderRadius: 3
-        });
     }
+    
+    const series = [{
+        name: 'Morning',
+        type: 'columnrange',
+        color: morningFill,
+        pointPlacement: -0.12,
+        pointWidth: 22,
+        grouping: false,
+        dataLabels: { enabled: false },
+        data: morningData,
+        borderWidth: 1,
+        borderColor: borderColor,
+        borderRadius: 3
+    }, {
+        name: 'Evening',
+        type: 'columnrange',
+        color: eveningFill,
+        pointPlacement: 0.12,
+        pointWidth: 22,
+        grouping: false,
+        dataLabels: { enabled: false },
+        data: eveningData,
+        borderWidth: 1,
+        borderColor: borderColor,
+        borderRadius: 3
+    }];
     
     Highcharts.chart('chart_prediction', {
         chart: {
