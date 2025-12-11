@@ -93,6 +93,10 @@
             border-radius: 8px;
         }
         
+        .card-body {
+            padding: 0.5rem;
+        }
+        
         .card-header {
             background-color: transparent;
             border-bottom: 1px solid #444;
@@ -897,8 +901,8 @@
             <div class="container-fluid">
                 
                 <!-- Conditions Overview -->
-                <div class="card mb-4 mt-4">
-                    <div class="card-body py-3">
+                <div class="card mb-2 mt-2">
+                    <div class="card-body py-2">
                         <div class="row align-items-center">
                             <!-- Optimal Hunt (Left) -->
                             <div class="col-md-6">
@@ -923,7 +927,7 @@
                 </div>
                 
                 <!-- Activity Prediction & Forecast Charts -->
-                <div class="card mb-4">
+                <div class="card mb-2">
                     <div class="card-body">
                         <div class="row">
                             <!-- Activity Prediction -->
@@ -939,7 +943,7 @@
                 </div>
                 
                 <!-- Main Chart -->
-                <div class="card mb-4" style="overflow: visible;">
+                <div class="card mb-2" style="overflow: visible;">
                     <div class="card-body" style="overflow: visible;">
                         <div class="row">
                             <div class="col-8" style="overflow: visible;">
@@ -958,7 +962,7 @@
                 </div>
                 
                 <!-- Polar Chart -->
-                <div class="card mb-4">
+                <div class="card mb-2">
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 d-flex flex-column align-items-center">
@@ -5641,11 +5645,7 @@ function createForecastChart(days) {
         xAxis: {
             categories: categories,
             labels: {
-                style: { color: '#E0E0E3' },
-                formatter: function() {
-                    const idx = this.pos;
-                    return this.value + '<br/><br/>' + moonPhase[idx];
-                }
+                style: { color: '#E0E0E3' }
             },
             lineColor: '#555',
             tickColor: '#555'
@@ -6006,11 +6006,7 @@ function createPredictionChart() {
         xAxis: {
             categories: categories,
             labels: { 
-                style: { color: '#E0E0E3' },
-                formatter: function() {
-                    const idx = this.pos;
-                    return this.value + '<br/><br/>' + moonPhases[idx];
-                }
+                style: { color: '#E0E0E3' }
             },
             lineColor: '#555',
             tickColor: '#555'
@@ -6042,14 +6038,13 @@ function createPredictionChart() {
             formatter: function() {
                 const idx = this.points[0].point.index;
                 const day = forecastDays[idx];
-                let html = `<b>${this.x}</b><br/>`;
-                html += `Morning: <b>${morningScores[idx]}/10</b>${idx === bestMorningIdx ? ' ⭐' : ''}<br/>`;
-                html += `Evening: <b>${eveningScores[idx]}/10</b>${idx === bestEveningIdx ? ' ⭐' : ''}<br/>`;
-                html += `<hr style="margin: 5px 0; border-color: #555;"/>`;
-                html += `${Math.round(day.tempmin)}° - ${Math.round(day.tempmax)}°F<br/>`;
-                html += `Wind: ${Math.round(day.windspeed)} mph ${getWindDirection(day.winddir)}<br/>`;
-                html += `Pressure: ${day.pressure} inHg<br/>`;
-                html += `${getMoonSymbol(day.moonphase)} ${getMoonPhaseName(day.moonphase)}`;
+                const date = new Date(day.datetime + 'T12:00:00');
+                const dateStr = Highcharts.dateFormat('%a, %b. %e', date);
+                let html = `<b>${dateStr}</b><br/>`;
+                html += `Temp: ${Math.round(day.tempmin)}° - ${Math.round(day.tempmax)}°F<br/>`;
+                html += `Wind: ${getWindDirection(day.winddir)} at ${Math.round(day.windspeed)}mph<br/>`;
+                html += `Press: ${day.pressure} inHg<br/>`;
+                html += `Moon: ${getMoonSymbol(day.moonphase)} ${getMoonPhaseName(day.moonphase)}`;
                 return html;
             }
         },
