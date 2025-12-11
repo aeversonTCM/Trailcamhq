@@ -5766,6 +5766,12 @@ function createForecastChart(days) {
             backgroundColor: 'rgba(40, 40, 40, 0.95)',
             style: { color: '#E0E0E3' },
             useHTML: true,
+            positioner: function(labelWidth, labelHeight, point) {
+                return {
+                    x: point.plotX + this.chart.plotLeft + 15,
+                    y: point.plotY + this.chart.plotTop - labelHeight - 10
+                };
+            },
             formatter: function() {
                 const idx = this.points[0].point.index;
                 const day = days[idx];
@@ -6176,6 +6182,12 @@ function createPredictionChart() {
             backgroundColor: 'rgba(40, 40, 40, 0.95)',
             style: { color: '#E0E0E3' },
             useHTML: true,
+            positioner: function(labelWidth, labelHeight, point) {
+                return {
+                    x: point.plotX + this.chart.plotLeft + 15,
+                    y: point.plotY + this.chart.plotTop - labelHeight - 10
+                };
+            },
             formatter: function() {
                 const idx = this.points[0].point.index;
                 const day = forecastDays[idx];
