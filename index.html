@@ -928,20 +928,6 @@
                         <div class="row">
                             <!-- Activity Prediction -->
                             <div class="col-md-6">
-                                <div class="d-flex flex-wrap align-items-center gap-1 mb-2" style="font-size: 11px;">
-                                    <span class="text-muted">Weights:</span>
-                                    <span style="color: #AF7AC5;">Press</span>
-                                    <input type="number" id="weightPressure" value="3" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #7FB3D5;">WDir</span>
-                                    <input type="number" id="weightWindDir" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #7FB3D5;">WSpd</span>
-                                    <input type="number" id="weightWindSpeed" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #D4AC0D;">Moon</span>
-                                    <input type="number" id="weightMoon" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #F4D03F;">Temp</span>
-                                    <input type="number" id="weightTemp" value="1" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span class="text-muted" id="totalWeightDisplay">= 10</span>
-                                </div>
                                 <div id="chart_prediction"></div>
                             </div>
                             <!-- Forecast -->
@@ -1049,6 +1035,41 @@
                                     <p class="text-muted small mt-2 mb-0">Additional camera services coming soon</p>
                                 </div>
                                 
+                            </div>
+                        </div>
+                        
+                        <!-- Prediction Weights Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="bi bi-sliders me-2"></i>Prediction Weights
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">Adjust how much each weather factor influences the Activity Prediction score.</p>
+                                <div class="row g-3">
+                                    <div class="col-6 col-md-4">
+                                        <label class="form-label small" style="color: #AF7AC5;">Pressure</label>
+                                        <input type="number" id="weightPressure" value="3" min="0" max="10" class="form-control form-control-sm" onchange="updatePredictionChart()">
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <label class="form-label small" style="color: #7FB3D5;">Wind Direction</label>
+                                        <input type="number" id="weightWindDir" value="2" min="0" max="10" class="form-control form-control-sm" onchange="updatePredictionChart()">
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <label class="form-label small" style="color: #7FB3D5;">Wind Speed</label>
+                                        <input type="number" id="weightWindSpeed" value="2" min="0" max="10" class="form-control form-control-sm" onchange="updatePredictionChart()">
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <label class="form-label small" style="color: #D4AC0D;">Moon Phase</label>
+                                        <input type="number" id="weightMoon" value="2" min="0" max="10" class="form-control form-control-sm" onchange="updatePredictionChart()">
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <label class="form-label small" style="color: #F4D03F;">Temperature</label>
+                                        <input type="number" id="weightTemp" value="1" min="0" max="10" class="form-control form-control-sm" onchange="updatePredictionChart()">
+                                    </div>
+                                    <div class="col-6 col-md-4 d-flex align-items-end">
+                                        <span class="text-muted" id="totalWeightDisplay">Total: 10</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -5607,7 +5628,8 @@ function createForecastChart(days) {
     
     Highcharts.chart('chart_forecast', {
         chart: {
-            backgroundColor: 'transparent'
+            backgroundColor: 'transparent',
+            height: 300
         },
         accessibility: { enabled: false },
         
@@ -5622,7 +5644,7 @@ function createForecastChart(days) {
                 style: { color: '#E0E0E3' },
                 formatter: function() {
                     const idx = this.pos;
-                    return this.value + '<br/>' + moonPhase[idx];
+                    return this.value + '<br/><br/>' + moonPhase[idx];
                 }
             },
             lineColor: '#555',
@@ -5987,7 +6009,7 @@ function createPredictionChart() {
                 style: { color: '#E0E0E3' },
                 formatter: function() {
                     const idx = this.pos;
-                    return this.value + '<br/>' + moonPhases[idx];
+                    return this.value + '<br/><br/>' + moonPhases[idx];
                 }
             },
             lineColor: '#555',
