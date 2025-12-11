@@ -5599,8 +5599,8 @@ function updateCurrentConditions(current) {
     
     const container = document.getElementById('currentConditions');
     container.innerHTML = `
-        <span><span style="color: #AF7AC5;">Press:</span> ${pressure}</span>
         <span><span style="color: #F4D03F;">Temp:</span> ${Math.round(current.temperature_2m)}°F</span>
+        <span><span style="color: #AF7AC5;">Press:</span> ${pressure}</span>
         <span><span style="color: #7FB3D5;">Wind:</span> ${windDir} at ${Math.round(current.wind_speed_10m)}mph</span>
         <span><span style="color: #D4AC0D;">Moon:</span> ${moonSymbol} ${moonName}</span>
     `;
@@ -5684,14 +5684,17 @@ function createForecastChart(days) {
             shared: true,
             backgroundColor: 'rgba(40, 40, 40, 0.95)',
             style: { color: '#E0E0E3' },
+            useHTML: true,
             formatter: function() {
                 const idx = this.points[0].point.index;
-                let html = `<b>${this.x}</b><br/>`;
-                html += `🌡️ High: <b>${tempMax[idx]}°F</b> / Low: <b>${tempMin[idx]}°F</b><br/>`;
-                html += `💨 Wind: <b>${Math.round(windSpeed[idx])} MPH ${windDir[idx]}</b><br/>`;
-                html += `📊 Pressure: <b>${pressure[idx]} inHg</b><br/>`;
-                html += `🌧️ Precip: <b>${precipProb[idx]}%</b><br/>`;
-                html += `${moonPhase[idx]} Moon`;
+                const day = days[idx];
+                const date = new Date(day.datetime + 'T12:00:00');
+                const dateStr = Highcharts.dateFormat('%a, %b. %e', date);
+                let html = `<b>${dateStr}</b><br/>`;
+                html += `<span style="color:#F4D03F">Temp:</span> ${Math.round(day.tempmin)}° - ${Math.round(day.tempmax)}°F<br/>`;
+                html += `<span style="color:#AF7AC5">Press:</span> ${day.pressure} inHg<br/>`;
+                html += `<span style="color:#7FB3D5">Wind:</span> ${getWindDirection(day.winddir)} at ${Math.round(day.windspeed)}mph<br/>`;
+                html += `<span style="color:#D4AC0D">Moon:</span> ${getMoonSymbol(day.moonphase)} ${getMoonPhaseName(day.moonphase)}`;
                 return html;
             }
         },
@@ -6035,16 +6038,17 @@ function createPredictionChart() {
             shared: true,
             backgroundColor: 'rgba(40, 40, 40, 0.95)',
             style: { color: '#E0E0E3' },
+            useHTML: true,
             formatter: function() {
                 const idx = this.points[0].point.index;
                 const day = forecastDays[idx];
                 const date = new Date(day.datetime + 'T12:00:00');
                 const dateStr = Highcharts.dateFormat('%a, %b. %e', date);
                 let html = `<b>${dateStr}</b><br/>`;
-                html += `Temp: ${Math.round(day.tempmin)}° - ${Math.round(day.tempmax)}°F<br/>`;
-                html += `Wind: ${getWindDirection(day.winddir)} at ${Math.round(day.windspeed)}mph<br/>`;
-                html += `Press: ${day.pressure} inHg<br/>`;
-                html += `Moon: ${getMoonSymbol(day.moonphase)} ${getMoonPhaseName(day.moonphase)}`;
+                html += `<span style="color:#F4D03F">Temp:</span> ${Math.round(day.tempmin)}° - ${Math.round(day.tempmax)}°F<br/>`;
+                html += `<span style="color:#AF7AC5">Press:</span> ${day.pressure} inHg<br/>`;
+                html += `<span style="color:#7FB3D5">Wind:</span> ${getWindDirection(day.winddir)} at ${Math.round(day.windspeed)}mph<br/>`;
+                html += `<span style="color:#D4AC0D">Moon:</span> ${getMoonSymbol(day.moonphase)} ${getMoonPhaseName(day.moonphase)}`;
                 return html;
             }
         },
@@ -6119,8 +6123,8 @@ function updateOptimalConditions() {
     const bestMoon = rates.moonPhase.indexOf(Math.max(...rates.moonPhase));
     
     document.getElementById('optimalConditions').innerHTML = `
-        <span><span style="color: #AF7AC5;">Press:</span> ${pressureRange}</span>
         <span><span style="color: #F4D03F;">Temp:</span> ${tempRange}</span>
+        <span><span style="color: #AF7AC5;">Press:</span> ${pressureRange}</span>
         <span><span style="color: #7FB3D5;">Wind:</span> ${windDirLabels[bestWindDir]} at ${windSpeedLabels[bestWindSpeed]}mph</span>
         <span><span style="color: #D4AC0D;">Moon:</span> ${moonLabels[bestMoon]}</span>
     `;
