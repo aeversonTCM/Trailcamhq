@@ -227,6 +227,14 @@
             cursor: default;
         }
         
+        /* Gallery modal on top of zoom modal */
+        #galleryModal, #bulkGalleryModal {
+            z-index: 2050 !important;
+        }
+        #galleryModal + .modal-backdrop, #bulkGalleryModal + .modal-backdrop {
+            z-index: 2040 !important;
+        }
+        
         .zoom-modal-container {
             position: relative;
             background: var(--bg-card);
