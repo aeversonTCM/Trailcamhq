@@ -235,6 +235,11 @@
             z-index: 2040 !important;
         }
         
+        /* Lighter backdrop when opened from zoom modal (65% transparent) */
+        .modal-backdrop.gallery-from-zoom {
+            opacity: 0.35 !important;
+        }
+        
         .zoom-modal-container {
             position: relative;
             background: var(--bg-card);
@@ -811,7 +816,6 @@
                         </div>
                         <div class="col-lg-2 admin-only">
                             <div class="card">
-                                <div class="card-header">Bulk Actions</div>
                                 <div class="card-body grid-sidebar">
                                     <div class="grid-selected-count" id="gridSelectedCount">None selected</div>
                                     <button class="btn btn-primary btn-sm" id="selectToggleBtn" onclick="toggleSelectAll()">Select All</button>
@@ -1030,7 +1034,7 @@
     </div>
 </div>
 <div class="modal fade" id="galleryModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content bg-dark">
             <div class="modal-header border-secondary">
                 <h5 class="modal-title"><i class="bi bi-folder-plus me-2"></i>Add to Gallery</h5>
@@ -1045,7 +1049,7 @@
 
 <!-- Bulk Gallery Modal -->
 <div class="modal fade" id="bulkGalleryModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content bg-dark">
             <div class="modal-header border-secondary">
                 <h5 class="modal-title"><i class="bi bi-folder-plus me-2"></i>Add Selected to Gallery</h5>
@@ -2859,7 +2863,10 @@ function updateBulkActionBar() {
     const untagged = filteredPhotos.slice(0, gridDisplayCount).filter(p => !p.tagIds || p.tagIds.length === 0);
     const allUntaggedSelected = untagged.length > 0 && untagged.every(p => selectedPhotos.has(p.photoId));
     
-    document.getElementById('gridSelectedCount').textContent = count > 0 ? `${count} selected` : 'None selected';
+    const countEl = document.getElementById('gridSelectedCount');
+    countEl.textContent = count > 0 ? `${count} selected` : 'None selected';
+    countEl.style.color = count > 0 ? 'var(--accent-green)' : 'rgba(255,255,255,0.5)';
+    
     const toggleBtn = document.getElementById('selectToggleBtn');
     toggleBtn.textContent = allSelected ? 'Clear All' : 'Select All';
     toggleBtn.className = allSelected ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm';
@@ -2920,7 +2927,19 @@ function populateGalleryGrids() {
     document.getElementById('bulkGalleryGrid').innerHTML = html.replace(/selectGalleryFromModal/g, 'bulkAddToGallery');
 }
 
-function openGalleryModal() { if (filteredPhotos.length > 0) galleryModalInstance.show(); }
+function openGalleryModal() { 
+    if (filteredPhotos.length > 0) {
+        galleryModalInstance.show();
+        // Add lighter backdrop when opening from zoom modal
+        if (zoomModalOpen) {
+            setTimeout(() => {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                const lastBackdrop = backdrops[backdrops.length - 1];
+                if (lastBackdrop) lastBackdrop.classList.add('gallery-from-zoom');
+            }, 10);
+        }
+    }
+}
 function openBulkGalleryModal() { if (selectedPhotos.size > 0) bulkGalleryModalInstance.show(); }
 
 async function selectGalleryFromModal(galleryId) {
