@@ -6069,26 +6069,26 @@ function createPredictionChart() {
     const morningScores = forecastDays.map(d => calculateActivityScore(d, rates, 'morning'));
     const eveningScores = forecastDays.map(d => calculateActivityScore(d, rates, 'evening'));
     
-    const bestMorningIdx = morningScores.indexOf(Math.max(...morningScores));
-    const bestEveningIdx = eveningScores.indexOf(Math.max(...eveningScores));
-    
     // Colors
     const morningFill = '#F4D03F';
     const eveningFill = '#5D6D7E';
     const borderColor = '#555';
     
+    // Calculate total day scores (morning + evening) for best day
+    const totalScores = morningScores.map((m, idx) => m + eveningScores[idx]);
+    const bestDayIdx = totalScores.indexOf(Math.max(...totalScores));
+    
     // Build columnrange series - each segment is an individual point
     // 10 segments per bar: each score point gets 1 segment
     const gap = 0.15;
     
-    // Calculate the top block index for best days (for star placement)
-    const bestMorningTopBlock = morningScores[bestMorningIdx] - 1;
-    const bestEveningTopBlock = eveningScores[bestEveningIdx] - 1;
+    // Star goes on top of morning bar for best day
+    const bestMorningTopBlock = morningScores[bestDayIdx] - 1;
     
     console.log('Morning scores:', morningScores);
     console.log('Evening scores:', eveningScores);
-    console.log('Best morning idx:', bestMorningIdx, 'top block:', bestMorningTopBlock);
-    console.log('Best evening idx:', bestEveningIdx, 'top block:', bestEveningTopBlock);
+    console.log('Total scores:', totalScores);
+    console.log('Best day idx:', bestDayIdx, 'morning top block:', bestMorningTopBlock);
     
     // Build all morning segments as one series
     const morningData = [];
@@ -6097,7 +6097,7 @@ function createPredictionChart() {
         for (let block = 0; block < score; block++) {
             const low = block + (gap / 2);
             const high = (block + 1) - (gap / 2);
-            const showStar = (idx === bestMorningIdx) && (block === bestMorningTopBlock);
+            const showStar = (idx === bestDayIdx) && (block === bestMorningTopBlock);
             morningData.push({
                 x: idx,
                 low: low,
@@ -6114,12 +6114,10 @@ function createPredictionChart() {
         for (let block = 0; block < score; block++) {
             const low = block + (gap / 2);
             const high = (block + 1) - (gap / 2);
-            const showStar = (idx === bestEveningIdx) && (block === bestEveningTopBlock);
             eveningData.push({
                 x: idx,
                 low: low,
-                high: high,
-                dataLabels: showStar ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
+                high: high
             });
         }
     }
