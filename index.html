@@ -20,7 +20,7 @@
             --bg-card: #2a2a2b;
             --bg-input: #3e3e40;
             --text-primary: #E0E0E3;
-            --text-muted: #888;
+            --text-muted: #E0E0E3;
             --accent-green: #4ade80;
             --accent-blue: #1C86EE;
             --accent-red: #dc2626;
@@ -32,6 +32,11 @@
             color: var(--text-primary);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
+        }
+        
+        /* Override Bootstrap's text-muted */
+        .text-muted {
+            color: var(--text-muted) !important;
         }
         
         /* Navbar */
@@ -772,6 +777,15 @@
                 </button>
             </div>
             <div id="hqError" class="alert alert-danger mt-3" style="display: none;">Invalid access code</div>
+            <hr class="my-4">
+            <div class="d-grid gap-2">
+                <button class="btn btn-outline-secondary" onclick="viewOnlyLogin()">
+                    <i class="bi bi-eye-fill me-2"></i>View Only
+                </button>
+            </div>
+            <div class="text-center mt-2">
+                <small class="text-muted">Browse photos without signing in</small>
+            </div>
         </div>
     </div>
 </div>
