@@ -546,10 +546,32 @@
         
         /* Dashboard */
         #chart_main { height: 500px; background: var(--bg-card); border-radius: 8px; overflow: visible; }
-        #chart_polar { width: 500px; height: 500px; }
-        #chart_weather { width: 100%; height: 450px; }
+        #chart_polar { width: 380px; height: 380px; }
+        #chart_weather { width: 100%; height: 380px; }
+        #chart_combined_scatter { width: 380px; height: 380px; }
         #chart_forecast { height: 300px; }
         #chart_prediction { height: 300px; }
+        
+        .scatter-toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        
+        .scatter-toggles label {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            background: var(--bg-input);
+        }
+        
+        .scatter-toggles label:hover {
+            background: #4a4a4c;
+        }
         
         .tooltip-panel {
             background: var(--bg-dark);
@@ -915,11 +937,12 @@
                     </div>
                 </div>
                 
-                <!-- Polar Chart -->
+                <!-- Weather + Combined Scatter + Activity Polar Charts Row -->
                 <div class="card mb-4">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6 d-flex flex-column align-items-center">
+                            <!-- Weather Chart (Left) -->
+                            <div class="col-md-4 d-flex flex-column align-items-center">
                                 <div class="mb-2">
                                     <label class="text-muted small me-2">Show photos by:</label>
                                     <select id="weatherField" class="form-select form-select-sm d-inline-block w-auto" onchange="updateWeatherChart()">
@@ -932,7 +955,27 @@
                                 </div>
                                 <div id="chart_weather"></div>
                             </div>
-                            <div class="col-md-6 d-flex justify-content-center">
+                            <!-- Combined Scatter Polar Chart (Center) -->
+                            <div class="col-md-4 d-flex flex-column align-items-center">
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                    <select id="scatterAnimalFilter" class="form-select form-select-sm w-auto" onchange="updateCombinedScatterChart()">
+                                        <option value="all">All</option>
+                                        <option value="buck">Buck</option>
+                                        <option value="doe">Doe</option>
+                                    </select>
+                                    <div class="scatter-toggles">
+                                        <label style="color: #FF6B6B;"><input type="checkbox" id="scatter_temp" checked onchange="updateCombinedScatterChart()"> 🌡️</label>
+                                        <label style="color: #AF7AC5;"><input type="checkbox" id="scatter_pressure" checked onchange="updateCombinedScatterChart()"> 📊</label>
+                                        <label style="color: #5DADE2;"><input type="checkbox" id="scatter_windspeed" checked onchange="updateCombinedScatterChart()"> 💨</label>
+                                        <label style="color: #7FB3D5;"><input type="checkbox" id="scatter_winddir" onchange="updateCombinedScatterChart()"> 🧭</label>
+                                        <label style="color: #F4D03F;"><input type="checkbox" id="scatter_timeofday" onchange="updateCombinedScatterChart()"> ⏰</label>
+                                        <label style="color: #D4AC0D;"><input type="checkbox" id="scatter_moonphase" onchange="updateCombinedScatterChart()"> 🌙</label>
+                                    </div>
+                                </div>
+                                <div id="chart_combined_scatter"></div>
+                            </div>
+                            <!-- Activity Polar Chart (Right) -->
+                            <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
                                 <div id="chart_polar"></div>
                             </div>
                         </div>
@@ -3779,6 +3822,9 @@ function applyDashboardFilters() {
     
     // Update weather chart with filtered data
     updateWeatherChart();
+    
+    // Update combined scatter chart
+    updateCombinedScatterChart();
 }
 
 async function initializeDashboard() {
@@ -3792,6 +3838,7 @@ async function initializeDashboard() {
     createMainChart();
     createPolarChart();
     createWeatherChart();
+    createCombinedScatterChart();
     loadForecast();
     
     hideLoading();
@@ -4969,6 +5016,265 @@ function calculateSunRelativeDistribution(doeData, buckData) {
     });
     
     return { doeSegments, buckSegments };
+}
+
+// ============== COMBINED SCATTER POLAR CHART ==============
+let combinedScatterChart;
+
+function getScatterFilteredPhotos() {
+    const filter = document.getElementById('scatterAnimalFilter')?.value || 'all';
+    if (filter === 'all') return dashboardPhotos;
+    return dashboardPhotos.filter(p => p.animalType === filter);
+}
+
+function normalizeValue(value, min, max) {
+    if (max === min) return 0.5;
+    return (value - min) / (max - min);
+}
+
+function getPhotoRange(photos, field) {
+    const values = photos.map(p => p[field]).filter(v => v !== '' && v !== undefined && v !== null && !isNaN(v));
+    if (values.length === 0) return { min: 0, max: 1 };
+    return { min: Math.min(...values), max: Math.max(...values) };
+}
+
+function timeToSunAngle(photo) {
+    const sun = sunData[photo.dateStr] || {};
+    const sunrise = sun.sunrise || 7 * 60 * 60 * 1000;
+    const sunset = sun.sunset || 18 * 60 * 60 * 1000;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const timeMs = photo.timeMs;
+    
+    const dayLength = sunset - sunrise;
+    const nightLength = DAY_MS - dayLength;
+    
+    if (timeMs >= sunrise && timeMs < sunset) {
+        const positionInDay = (timeMs - sunrise) / dayLength;
+        return positionInDay * 180;
+    } else {
+        let timeSinceSunset;
+        if (timeMs >= sunset) {
+            timeSinceSunset = timeMs - sunset;
+        } else {
+            timeSinceSunset = (DAY_MS - sunset) + timeMs;
+        }
+        const positionInNight = timeSinceSunset / nightLength;
+        return 180 + positionInNight * 180;
+    }
+}
+
+function buildScatterSeriesData(photos) {
+    const tempRange = getPhotoRange(photos, 'tempMax');
+    const pressureRange = getPhotoRange(photos, 'barometricPressure');
+    const windSpeedRange = getPhotoRange(photos, 'windSpeed');
+    
+    // Scatter: angle = sun-relative time, radius = normalized value
+    const tempScatter = photos.filter(p => p.tempMax !== '' && p.tempMax !== undefined).map(p => ({
+        x: timeToSunAngle(p),
+        y: 0.15 + normalizeValue(p.tempMax, tempRange.min, tempRange.max) * 0.8,
+        temp: p.tempMax,
+        animal: p.animalType
+    }));
+    
+    const pressureScatter = photos.filter(p => p.barometricPressure !== '' && p.barometricPressure !== undefined).map(p => ({
+        x: timeToSunAngle(p),
+        y: 0.15 + normalizeValue(p.barometricPressure, pressureRange.min, pressureRange.max) * 0.8,
+        pressure: p.barometricPressure,
+        animal: p.animalType
+    }));
+    
+    const windSpeedScatter = photos.filter(p => p.windSpeed !== '' && p.windSpeed !== undefined).map(p => ({
+        x: timeToSunAngle(p),
+        y: 0.15 + normalizeValue(p.windSpeed, windSpeedRange.min, windSpeedRange.max) * 0.8,
+        windSpeed: p.windSpeed,
+        animal: p.animalType
+    }));
+    
+    // Wind Direction: angle = compass direction
+    const windDirScatter = photos.filter(p => p.windDirection !== '' && p.windDirection !== undefined).map(p => ({
+        x: p.windDirection,
+        y: 0.3 + Math.random() * 0.5,
+        windDir: p.windDirection,
+        animal: p.animalType
+    }));
+    
+    // Time of Day: angle = sun-relative time
+    const timeScatter = photos.map(p => ({
+        x: timeToSunAngle(p),
+        y: 0.3 + Math.random() * 0.5,
+        hour: p.timeMs / (60 * 60 * 1000),
+        animal: p.animalType
+    }));
+    
+    // Moon Phase: angle = phase position (need to get from sunData)
+    const moonScatter = photos.map(p => {
+        const sun = sunData[p.dateStr] || {};
+        const moonPhase = sun.moonphase || 0;
+        return {
+            x: moonPhase * 360,
+            y: 0.3 + Math.random() * 0.5,
+            moonPhase: moonPhase,
+            animal: p.animalType
+        };
+    });
+    
+    return { tempScatter, pressureScatter, windSpeedScatter, windDirScatter, timeScatter, moonScatter };
+}
+
+function createCombinedScatterChart() {
+    const photos = getScatterFilteredPhotos();
+    if (photos.length === 0) return;
+    
+    const data = buildScatterSeriesData(photos);
+    
+    combinedScatterChart = Highcharts.chart('chart_combined_scatter', {
+        chart: {
+            polar: true,
+            backgroundColor: 'transparent',
+            animation: false
+        },
+        accessibility: { enabled: false },
+        
+        title: {
+            text: 'Weather & Activity Correlation',
+            style: { color: '#E0E0E3' }
+        },
+        
+        pane: {
+            startAngle: -90,
+            endAngle: 270,
+            background: [{
+                backgroundColor: 'rgba(255, 255, 200, 0.15)',
+                borderWidth: 0,
+                outerRadius: '100%',
+                innerRadius: '0%',
+                shape: 'arc',
+                from: 0,
+                to: 180
+            }, {
+                backgroundColor: 'rgba(50, 50, 80, 0.25)',
+                borderWidth: 0,
+                outerRadius: '100%',
+                innerRadius: '0%',
+                shape: 'arc',
+                from: 180,
+                to: 360
+            }]
+        },
+        
+        xAxis: {
+            tickInterval: 15,
+            min: 0,
+            max: 360,
+            labels: {
+                formatter: function() {
+                    const seg = this.value / 15;
+                    if (seg === 0) return '☀️';
+                    if (seg === 6) return 'Midday';
+                    if (seg === 12) return '🌙';
+                    if (seg === 18) return 'Midnight';
+                    return '';
+                },
+                style: { color: '#E0E0E3', fontSize: '11px' }
+            },
+            gridLineColor: '#444'
+        },
+        
+        yAxis: {
+            min: 0,
+            max: 1,
+            labels: { enabled: false },
+            gridLineColor: '#333'
+        },
+        
+        plotOptions: {
+            scatter: {
+                marker: {
+                    radius: 4,
+                    states: { hover: { enabled: true, radius: 6 } }
+                }
+            },
+            series: { animation: false }
+        },
+        
+        series: [
+            {
+                type: 'scatter', name: 'Temperature', id: 'scatter_temp',
+                data: data.tempScatter, color: '#FF6B6B', marker: { symbol: 'circle' },
+                visible: document.getElementById('scatter_temp')?.checked ?? true,
+                tooltip: { pointFormatter: function() { return `<b>Temp:</b> ${this.temp}°F<br/><b>Animal:</b> ${this.animal}`; } }
+            },
+            {
+                type: 'scatter', name: 'Pressure', id: 'scatter_pressure',
+                data: data.pressureScatter, color: '#AF7AC5', marker: { symbol: 'circle' },
+                visible: document.getElementById('scatter_pressure')?.checked ?? true,
+                tooltip: { pointFormatter: function() { return `<b>Pressure:</b> ${this.pressure} inHg<br/><b>Animal:</b> ${this.animal}`; } }
+            },
+            {
+                type: 'scatter', name: 'Wind Speed', id: 'scatter_windspeed',
+                data: data.windSpeedScatter, color: '#5DADE2', marker: { symbol: 'circle' },
+                visible: document.getElementById('scatter_windspeed')?.checked ?? true,
+                tooltip: { pointFormatter: function() { return `<b>Wind Speed:</b> ${this.windSpeed} mph<br/><b>Animal:</b> ${this.animal}`; } }
+            },
+            {
+                type: 'scatter', name: 'Wind Direction', id: 'scatter_winddir',
+                data: data.windDirScatter, color: '#7FB3D5', marker: { symbol: 'diamond' },
+                visible: document.getElementById('scatter_winddir')?.checked ?? false,
+                tooltip: { pointFormatter: function() { return `<b>Wind Dir:</b> ${getWindDirection(this.windDir)}<br/><b>Animal:</b> ${this.animal}`; } }
+            },
+            {
+                type: 'scatter', name: 'Time of Day', id: 'scatter_timeofday',
+                data: data.timeScatter, color: '#F4D03F', marker: { symbol: 'triangle' },
+                visible: document.getElementById('scatter_timeofday')?.checked ?? false,
+                tooltip: { pointFormatter: function() { 
+                    const h = Math.floor(this.hour); const m = Math.floor((this.hour - h) * 60);
+                    return `<b>Time:</b> ${h}:${m.toString().padStart(2,'0')}<br/><b>Animal:</b> ${this.animal}`; 
+                } }
+            },
+            {
+                type: 'scatter', name: 'Moon Phase', id: 'scatter_moonphase',
+                data: data.moonScatter, color: '#D4AC0D', marker: { symbol: 'circle' },
+                visible: document.getElementById('scatter_moonphase')?.checked ?? false,
+                tooltip: { pointFormatter: function() { return `<b>Moon:</b> ${getMoonPhaseName(this.moonPhase)}<br/><b>Animal:</b> ${this.animal}`; } }
+            }
+        ],
+        
+        legend: { enabled: false },
+        
+        tooltip: {
+            backgroundColor: 'rgba(40, 40, 40, 0.95)',
+            style: { color: '#E0E0E3' },
+            borderColor: '#555'
+        },
+        
+        credits: { enabled: false }
+    });
+}
+
+function updateCombinedScatterChart() {
+    if (!combinedScatterChart) {
+        createCombinedScatterChart();
+        return;
+    }
+    
+    const photos = getScatterFilteredPhotos();
+    const data = buildScatterSeriesData(photos);
+    
+    combinedScatterChart.get('scatter_temp')?.setData(data.tempScatter, false);
+    combinedScatterChart.get('scatter_pressure')?.setData(data.pressureScatter, false);
+    combinedScatterChart.get('scatter_windspeed')?.setData(data.windSpeedScatter, false);
+    combinedScatterChart.get('scatter_winddir')?.setData(data.windDirScatter, false);
+    combinedScatterChart.get('scatter_timeofday')?.setData(data.timeScatter, false);
+    combinedScatterChart.get('scatter_moonphase')?.setData(data.moonScatter, false);
+    
+    combinedScatterChart.get('scatter_temp')?.setVisible(document.getElementById('scatter_temp')?.checked ?? false, false);
+    combinedScatterChart.get('scatter_pressure')?.setVisible(document.getElementById('scatter_pressure')?.checked ?? false, false);
+    combinedScatterChart.get('scatter_windspeed')?.setVisible(document.getElementById('scatter_windspeed')?.checked ?? false, false);
+    combinedScatterChart.get('scatter_winddir')?.setVisible(document.getElementById('scatter_winddir')?.checked ?? false, false);
+    combinedScatterChart.get('scatter_timeofday')?.setVisible(document.getElementById('scatter_timeofday')?.checked ?? false, false);
+    combinedScatterChart.get('scatter_moonphase')?.setVisible(document.getElementById('scatter_moonphase')?.checked ?? false, false);
+    
+    combinedScatterChart.redraw();
 }
 
 function createWeatherChart() {
