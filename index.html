@@ -2795,6 +2795,9 @@ async function refreshPhotos() {
         applyFilters();
         hideLoading();
         
+        // Show most recent photo in tooltip
+        showMostRecentInTooltip();
+        
         // Sync new photos to cache in background
         if (newPhotos.length > 0) {
             showSyncStatus(`Syncing ${newPhotos.length} new photos...`, 'syncing');
@@ -4850,6 +4853,13 @@ function createMainChart() {
     console.log('Main chart created successfully');
     
     // Show most recent photo in tooltip on load
+    showMostRecentInTooltip();
+    } catch (e) {
+        console.error('Error creating main chart:', e);
+    }
+}
+
+function showMostRecentInTooltip() {
     if (dashboardPhotos.length > 0) {
         const mostRecent = dashboardPhotos.reduce((latest, photo) => {
             const photoDate = new Date(photo.dateStr + 'T' + photo.timeStr);
@@ -4869,9 +4879,6 @@ function createMainChart() {
             windDirection: mostRecent.windDirection
         };
         updateTooltipPanel(mockPoint);
-    }
-    } catch (e) {
-        console.error('Error creating main chart:', e);
     }
 }
 
@@ -6059,13 +6066,66 @@ function createPredictionChart() {
         return Highcharts.dateFormat('%a %m/%d', date);
     });
     
-    const moonPhases = forecastDays.map(d => getMoonSymbol(d.moonphase));
-    
     const morningScores = forecastDays.map(d => calculateActivityScore(d, rates, 'morning'));
     const eveningScores = forecastDays.map(d => calculateActivityScore(d, rates, 'evening'));
     
     const bestMorningIdx = morningScores.indexOf(Math.max(...morningScores));
     const bestEveningIdx = eveningScores.indexOf(Math.max(...eveningScores));
+    
+    // Colors
+    const morningFill = '#F4D03F';
+    const morningBest = '#FFD700';
+    const eveningFill = '#5D6D7E';
+    const eveningBest = '#8395A7';
+    const emptyColor = 'rgba(80, 80, 80, 0.3)';
+    const gapColor = '#2a2a2b'; // Card background for gaps
+    
+    // Build 5 stacked series for morning and 5 for evening
+    const series = [];
+    
+    for (let block = 0; block < 5; block++) {
+        // Morning block
+        series.push({
+            name: block === 0 ? 'Morning' : undefined,
+            linkedTo: block === 0 ? undefined : 'morning',
+            id: block === 0 ? 'morning' : undefined,
+            stack: 'morning',
+            showInLegend: block === 0,
+            data: morningScores.map((score, idx) => {
+                const filledBlocks = Math.floor(score / 2);
+                const isFilled = block < filledBlocks;
+                const isBest = idx === bestMorningIdx;
+                return {
+                    y: 2,
+                    color: isFilled ? (isBest ? morningBest : morningFill) : emptyColor,
+                    dataLabels: (block === 4 && isBest) ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
+                };
+            }),
+            borderWidth: 2,
+            borderColor: gapColor
+        });
+        
+        // Evening block
+        series.push({
+            name: block === 0 ? 'Evening' : undefined,
+            linkedTo: block === 0 ? undefined : 'evening',
+            id: block === 0 ? 'evening' : undefined,
+            stack: 'evening',
+            showInLegend: block === 0,
+            data: eveningScores.map((score, idx) => {
+                const filledBlocks = Math.floor(score / 2);
+                const isFilled = block < filledBlocks;
+                const isBest = idx === bestEveningIdx;
+                return {
+                    y: 2,
+                    color: isFilled ? (isBest ? eveningBest : eveningFill) : emptyColor,
+                    dataLabels: (block === 4 && isBest) ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
+                };
+            }),
+            borderWidth: 2,
+            borderColor: gapColor
+        });
+    }
     
     Highcharts.chart('chart_prediction', {
         chart: {
@@ -6090,16 +6150,12 @@ function createPredictionChart() {
         },
         
         yAxis: {
-            min: 1,
+            min: 0,
             max: 10,
-            title: { text: null },
-            labels: { style: { color: '#E0E0E3' } },
-            gridLineColor: '#444',
-            plotBands: [{
-                from: 7, to: 10,
-                color: 'rgba(76, 175, 80, 0.1)',
-                label: { text: 'High', style: { color: '#4CAF50', fontSize: '9px' }, align: 'right', x: -5 }
-            }]
+            visible: false,
+            gridLineWidth: 0,
+            labels: { enabled: false },
+            title: { text: null }
         },
         
         legend: {
@@ -6129,29 +6185,14 @@ function createPredictionChart() {
         
         plotOptions: {
             column: {
-                grouping: true,
-                shadow: false,
-                borderWidth: 0
+                stacking: 'normal',
+                groupPadding: 0.1,
+                pointPadding: 0.05,
+                borderRadius: 2
             }
         },
         
-        series: [{
-            name: 'Morning',
-            color: '#F4D03F',
-            data: morningScores.map((score, idx) => ({
-                y: score,
-                color: idx === bestMorningIdx ? '#FFD700' : '#F4D03F',
-                dataLabels: idx === bestMorningIdx ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
-            }))
-        }, {
-            name: 'Evening',
-            color: '#5D6D7E',
-            data: eveningScores.map((score, idx) => ({
-                y: score,
-                color: idx === bestEveningIdx ? '#8395A7' : '#5D6D7E',
-                dataLabels: idx === bestEveningIdx ? { enabled: true, format: '⭐', style: { fontSize: '14px', textOutline: 'none' }, y: -5 } : { enabled: false }
-            }))
-        }],
+        series: series,
         
         credits: { enabled: false }
     });
