@@ -1173,10 +1173,10 @@
         </div>
         <div class="zoom-info" id="zoomInfo"></div>
         <div class="zoom-actions-wrapper">
-            <div class="zoom-left-section">
+            <div class="zoom-left-section admin-only">
                 <span class="zoom-rapid-label" id="rapidFireLabel" onclick="handleRapidFireClick()">Rapid Fire</span>
             </div>
-            <div class="zoom-actions" id="zoomActions"></div>
+            <div class="zoom-actions admin-only" id="zoomActions"></div>
             <div class="zoom-right-section">
                 <button class="zoom-gallery-btn admin-only" id="zoomGalleryBtn" onclick="openGalleryModal()"><i class="bi bi-folder-plus"></i> Gallery</button>
                 <button class="zoom-download-btn" onclick="zoomDownloadPhoto()"><i class="bi bi-download"></i> Download</button>
@@ -3279,13 +3279,16 @@ function updateZoomModal() {
     infoHtml += '</div>';
     infoHtml += '</div>';
     
-    // Delete button on right
+    // Delete button on right (admin only)
     const deleteText = rapidFireEnabled ? 'Rapid Delete' : 'Delete';
-    infoHtml += `<div class="zoom-delete-section">`;
+    infoHtml += `<div class="zoom-delete-section admin-only">`;
     infoHtml += `<button class="zoom-delete-btn" id="zoomDeleteBtn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> ${deleteText}</button>`;
     infoHtml += `</div>`;
     
     document.getElementById('zoomInfo').innerHTML = infoHtml;
+    
+    // Apply access level to dynamically added elements
+    applyAccessLevel();
     
     // Update tag button states
     updateZoomTagButtonStates(photo);
