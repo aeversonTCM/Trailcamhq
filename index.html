@@ -713,6 +713,11 @@
                 <select id="galleryFilter" class="form-select form-select-sm" style="width: auto;" onchange="applyFilters()">
                     <option value="">All Galleries</option>
                 </select>
+                <select id="dayNightFilter" class="form-select form-select-sm" style="width: auto;" onchange="applyFilters()">
+                    <option value="">Day & Night</option>
+                    <option value="day">Daytime</option>
+                    <option value="night">Nighttime</option>
+                </select>
                 <select id="sortOrder" class="form-select form-select-sm" style="width: auto; display: none;" onchange="applyFilters()">
                     <option value="newest">Newest First</option>
                     <option value="oldest">Oldest First</option>
@@ -2404,6 +2409,7 @@ async function initializeApp() {
     // Dashboard tab listener (for when switching back to dashboard)
     document.getElementById('dashboard-tab').addEventListener('shown.bs.tab', () => {
         document.getElementById('sortOrder').style.display = 'none';
+        document.getElementById('dayNightFilter').style.display = '';
         document.getElementById('filterBar').style.display = 'block';
         clearFilters();
         if (!dashboardInitialized) {
@@ -2416,6 +2422,7 @@ async function initializeApp() {
     // Photos tab listener - clear filters and render when switching to photos
     document.getElementById('photos-tab').addEventListener('shown.bs.tab', () => {
         document.getElementById('sortOrder').style.display = '';
+        document.getElementById('dayNightFilter').style.display = 'none';
         document.getElementById('filterBar').style.display = 'block';
         clearFilters();
     });
@@ -2780,6 +2787,7 @@ function clearFilters() {
     document.getElementById('cameraFilter').value = '';
     document.getElementById('tagFilter').value = '';
     document.getElementById('galleryFilter').value = '';
+    document.getElementById('dayNightFilter').value = '';
     document.getElementById('sortOrder').value = 'newest';
     applyFilters();
 }
@@ -3692,6 +3700,7 @@ function applyDashboardFilters() {
     const cameraFilter = document.getElementById('cameraFilter').value;
     const locationFilter = document.getElementById('locationFilter').value;
     const tagFilter = document.getElementById('tagFilter').value;
+    const dayNightFilter = document.getElementById('dayNightFilter').value;
     
     // Map tag filter value to animalType
     const tagToType = {
@@ -3704,10 +3713,26 @@ function applyDashboardFilters() {
     // Build filtered arrays for each tag type
     const filteredArrays = {};
     
+    // 30 minutes in milliseconds
+    const thirtyMinMs = 30 * 60 * 1000;
+    
     dashboardPhotos.forEach(photo => {
         if (cameraFilter && photo.camera !== cameraFilter) return;
         if (locationFilter && photo.location !== locationFilter) return;
         if (filterType && photo.animalType !== filterType) return;
+        
+        // Day/Night filter
+        if (dayNightFilter) {
+            const sun = sunData[photo.dateStr];
+            if (sun && sun.sunrise !== undefined && sun.sunset !== undefined) {
+                const dayStart = sun.sunrise - thirtyMinMs; // 30 min before sunrise
+                const dayEnd = sun.sunset + thirtyMinMs;    // 30 min after sunset
+                const isDaytime = photo.timeMs >= dayStart && photo.timeMs <= dayEnd;
+                
+                if (dayNightFilter === 'day' && !isDaytime) return;
+                if (dayNightFilter === 'night' && isDaytime) return;
+            }
+        }
         
         const point = {
             x: photo.dateMs,
