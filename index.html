@@ -922,6 +922,43 @@
                     </div>
                 </div>
                 
+                <!-- Activity Prediction & Forecast Charts -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Activity Prediction -->
+                            <div class="col-md-6">
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                    <select id="predictionAnimalFilter" class="form-select form-select-sm w-auto" onchange="updatePredictionChart()">
+                                        <option value="all">All Deer</option>
+                                        <option value="buck">Buck</option>
+                                        <option value="doe">Doe</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex flex-wrap align-items-center gap-1 mb-2" style="font-size: 11px;">
+                                    <span class="text-muted">Weights:</span>
+                                    <span style="color: #AF7AC5;">Press</span>
+                                    <input type="number" id="weightPressure" value="3" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span style="color: #7FB3D5;">WDir</span>
+                                    <input type="number" id="weightWindDir" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span style="color: #7FB3D5;">WSpd</span>
+                                    <input type="number" id="weightWindSpeed" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span style="color: #D4AC0D;">Moon</span>
+                                    <input type="number" id="weightMoon" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span style="color: #F4D03F;">Temp</span>
+                                    <input type="number" id="weightTemp" value="1" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
+                                    <span class="text-muted" id="totalWeightDisplay">= 10</span>
+                                </div>
+                                <div id="chart_prediction"></div>
+                            </div>
+                            <!-- Forecast -->
+                            <div class="col-md-6">
+                                <div id="chart_forecast"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Main Chart -->
                 <div class="card mb-4" style="overflow: visible;">
                     <div class="card-body" style="overflow: visible;">
@@ -960,43 +997,6 @@
                             </div>
                             <div class="col-md-6 d-flex justify-content-center">
                                 <div id="chart_polar"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Activity Prediction & Forecast Charts -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div class="row">
-                            <!-- Activity Prediction -->
-                            <div class="col-md-6">
-                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                                    <select id="predictionAnimalFilter" class="form-select form-select-sm w-auto" onchange="updatePredictionChart()">
-                                        <option value="all">All Deer</option>
-                                        <option value="buck">Buck</option>
-                                        <option value="doe">Doe</option>
-                                    </select>
-                                </div>
-                                <div class="d-flex flex-wrap align-items-center gap-1 mb-2" style="font-size: 11px;">
-                                    <span class="text-muted">Weights:</span>
-                                    <span style="color: #AF7AC5;">Press</span>
-                                    <input type="number" id="weightPressure" value="3" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #7FB3D5;">WDir</span>
-                                    <input type="number" id="weightWindDir" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #7FB3D5;">WSpd</span>
-                                    <input type="number" id="weightWindSpeed" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #D4AC0D;">Moon</span>
-                                    <input type="number" id="weightMoon" value="2" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span style="color: #F4D03F;">Temp</span>
-                                    <input type="number" id="weightTemp" value="1" min="0" max="10" class="form-control form-control-sm" style="width: 40px; font-size: 11px;" onchange="updatePredictionChart()">
-                                    <span class="text-muted" id="totalWeightDisplay">= 10</span>
-                                </div>
-                                <div id="chart_prediction"></div>
-                            </div>
-                            <!-- Forecast -->
-                            <div class="col-md-6">
-                                <div id="chart_forecast"></div>
                             </div>
                         </div>
                     </div>
