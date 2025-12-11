@@ -5314,8 +5314,7 @@ function createWeatherChart() {
         accessibility: { enabled: false },
         
         title: {
-            text: title,
-            style: { color: '#E0E0E3' }
+            text: null
         },
         
         xAxis: {
@@ -5395,11 +5394,10 @@ function selectWeatherField(field) {
 
 function updateWeatherChart() {
     const field = currentWeatherField;
-    const { categories, dayCounts, nightCounts, title } = calculateWeatherDistribution(field);
+    const { categories, dayCounts, nightCounts } = calculateWeatherDistribution(field);
     
     const chart = Highcharts.charts.find(c => c && c.renderTo && c.renderTo.id === 'chart_weather');
     if (chart) {
-        chart.setTitle({ text: title });
         chart.xAxis[0].setCategories(categories);
         chart.series[0].setData(dayCounts, false);
         chart.series[1].setData(nightCounts, false);
