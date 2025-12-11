@@ -431,6 +431,11 @@
             color: #fff;
         }
         
+        .zoom-gallery-btn.active {
+            background: var(--accent-green);
+            color: #000;
+        }
+        
         .zoom-tag-row {
             display: flex;
             flex-wrap: wrap;
@@ -1149,7 +1154,7 @@
             </div>
             <div class="zoom-actions" id="zoomActions"></div>
             <div class="zoom-right-section">
-                <button class="zoom-gallery-btn" onclick="openGalleryModal()"><i class="bi bi-folder-plus"></i> Gallery</button>
+                <button class="zoom-gallery-btn" id="zoomGalleryBtn" onclick="openGalleryModal()"><i class="bi bi-folder-plus"></i> Gallery</button>
                 <button class="zoom-download-btn" onclick="zoomDownloadPhoto()"><i class="bi bi-download"></i> Download</button>
             </div>
         </div>
@@ -3358,18 +3363,41 @@ function updateZoomModal() {
     } else {
         infoHtml += `<span class="info-label">Tags:</span> <span class="info-value" style="color: var(--text-muted);">None</span>`;
     }
+    
+    // Gallery info - only show if photo has galleries
+    const photoGalleryNames = (photo.photoGroupIds || []).map(id => {
+        const gallery = galleries.find(g => g.photoGroupId === id);
+        return gallery ? gallery.name : null;
+    }).filter(Boolean);
+    
+    if (photoGalleryNames.length > 0) {
+        infoHtml += `<span class="info-sep">|</span>`;
+        infoHtml += `<span class="info-label">Gallery:</span> <span class="info-name">${photoGalleryNames.join(', ')}</span>`;
+    }
+    
     infoHtml += '</div>';
     infoHtml += '</div>';
     
     // Delete button on right
+    const deleteText = rapidFireEnabled ? 'Rapid Delete' : 'Delete';
     infoHtml += `<div class="zoom-delete-section">`;
-    infoHtml += `<button class="zoom-delete-btn" id="zoomDeleteBtn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> Delete</button>`;
+    infoHtml += `<button class="zoom-delete-btn" id="zoomDeleteBtn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> ${deleteText}</button>`;
     infoHtml += `</div>`;
     
     document.getElementById('zoomInfo').innerHTML = infoHtml;
     
     // Update tag button states
     updateZoomTagButtonStates(photo);
+    
+    // Update gallery button state
+    const galleryBtn = document.getElementById('zoomGalleryBtn');
+    if (galleryBtn) {
+        if (photoGalleryNames.length > 0) {
+            galleryBtn.classList.add('active');
+        } else {
+            galleryBtn.classList.remove('active');
+        }
+    }
 }
 
 function renderZoomTagButtons() {
