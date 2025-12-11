@@ -6078,30 +6078,30 @@ function createPredictionChart() {
     const borderColor = '#555';
     
     // Build columnrange series - each segment is independently positioned
-    // Segment heights: 0-2, 2-4, 4-6, 6-8, 8-10 with small gaps
-    const gap = 0.3;
-    const segmentHeight = 2 - gap;
+    // 10 segments: 0-1, 1-2, 2-3, etc. with small gaps
+    const gap = 0.15;
     
     const series = [];
     
     // Calculate the top block index for best days (for star placement)
-    const bestMorningTopBlock = Math.floor(morningScores[bestMorningIdx] / 2) - 1;
-    const bestEveningTopBlock = Math.floor(eveningScores[bestEveningIdx] / 2) - 1;
+    // Now using 10 blocks, so divide score by 1 instead of 2
+    const bestMorningTopBlock = morningScores[bestMorningIdx] - 1;
+    const bestEveningTopBlock = eveningScores[bestEveningIdx] - 1;
     
     console.log('Morning scores:', morningScores);
     console.log('Evening scores:', eveningScores);
     console.log('Best morning idx:', bestMorningIdx, 'top block:', bestMorningTopBlock);
     console.log('Best evening idx:', bestEveningIdx, 'top block:', bestEveningTopBlock);
     
-    for (let block = 0; block < 5; block++) {
-        const low = block * 2 + (gap / 2);
-        const high = (block + 1) * 2 - (gap / 2);
+    for (let block = 0; block < 10; block++) {
+        const low = block * 1 + (gap / 2);
+        const high = (block + 1) * 1 - (gap / 2);
         
         // Morning segments - star only on bestMorningIdx at bestMorningTopBlock
         const morningData = [];
         for (let idx = 0; idx < morningScores.length; idx++) {
             const score = morningScores[idx];
-            const filledBlocks = Math.floor(score / 2);
+            const filledBlocks = score; // Now 1 block per score point
             if (block >= filledBlocks) {
                 morningData.push(null);
                 continue;
@@ -6122,7 +6122,7 @@ function createPredictionChart() {
             showInLegend: block === 0,
             color: morningFill,
             pointPlacement: -0.12,
-            pointWidth: 18,
+            pointWidth: 22,
             grouping: false,
             dataLabels: { enabled: false },
             data: morningData,
@@ -6135,7 +6135,7 @@ function createPredictionChart() {
         const eveningData = [];
         for (let idx = 0; idx < eveningScores.length; idx++) {
             const score = eveningScores[idx];
-            const filledBlocks = Math.floor(score / 2);
+            const filledBlocks = score; // Now 1 block per score point
             if (block >= filledBlocks) {
                 eveningData.push(null);
                 continue;
@@ -6156,7 +6156,7 @@ function createPredictionChart() {
             showInLegend: block === 0,
             color: eveningFill,
             pointPlacement: 0.12,
-            pointWidth: 18,
+            pointWidth: 22,
             grouping: false,
             dataLabels: { enabled: false },
             data: eveningData,
