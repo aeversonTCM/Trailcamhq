@@ -236,10 +236,10 @@
         }
         
         /* Gallery modal on top of zoom modal */
-        #galleryModal, #bulkGalleryModal {
+        #galleryModal, #bulkGalleryModal, #rapidFireModal {
             z-index: 2050 !important;
         }
-        #galleryModal + .modal-backdrop, #bulkGalleryModal + .modal-backdrop {
+        #galleryModal + .modal-backdrop, #bulkGalleryModal + .modal-backdrop, #rapidFireModal + .modal-backdrop {
             z-index: 2040 !important;
         }
         
@@ -374,8 +374,10 @@
             background: var(--bg-card);
         }
         
-        .zoom-left-spacer {
+        .zoom-left-section {
             flex: 1;
+            display: flex;
+            align-items: flex-end;
         }
         
         .zoom-actions {
@@ -492,7 +494,6 @@
             color: var(--text-muted);
             font-size: 13px;
             cursor: pointer;
-            margin-right: 10px;
         }
         
         .zoom-rapid-checkbox input {
@@ -1103,6 +1104,29 @@
     </div>
 </div>
 
+<!-- Rapid Fire Confirmation Modal -->
+<div class="modal fade" id="rapidFireModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="bi bi-lightning-fill me-2" style="color: var(--accent-gold);"></i>Rapid Fire Mode</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Rapid Fire mode enables quick photo processing:</p>
+                <ul>
+                    <li>Auto-advance to next photo after tagging</li>
+                    <li>Immediate delete without confirmation</li>
+                </ul>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" onclick="cancelRapidFire()">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmRapidFire()">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Quick Tag Zoom Modal -->
 <div id="zoomModal" class="zoom-modal-overlay" style="display: none;" onclick="closeZoomModal()">
     <div class="zoom-modal-container" onclick="event.stopPropagation()">
@@ -1122,7 +1146,9 @@
         </div>
         <div class="zoom-info" id="zoomInfo"></div>
         <div class="zoom-actions-wrapper">
-            <div class="zoom-left-spacer"></div>
+            <div class="zoom-left-section">
+                <label class="zoom-rapid-checkbox"><input type="checkbox" id="rapidFireCheckbox" onchange="handleRapidFireChange(this)"> Rapid Fire</label>
+            </div>
             <div class="zoom-actions" id="zoomActions"></div>
             <div class="zoom-right-section">
                 <button class="zoom-gallery-btn" onclick="openGalleryModal()"><i class="bi bi-folder-plus"></i> Gallery</button>
@@ -1518,7 +1544,7 @@ const tagConfig = {
 };
 
 // Bootstrap modals
-let galleryModalInstance, bulkGalleryModalInstance, bulkDeleteModalInstance;
+let galleryModalInstance, bulkGalleryModalInstance, bulkDeleteModalInstance, rapidFireModalInstance;
 
 // ============== LOADING ==============
 function showLoading(msg = 'Loading...') {
@@ -2271,6 +2297,7 @@ async function initializeApp() {
     galleryModalInstance = new bootstrap.Modal(document.getElementById('galleryModal'));
     bulkGalleryModalInstance = new bootstrap.Modal(document.getElementById('bulkGalleryModal'));
     bulkDeleteModalInstance = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
+    rapidFireModalInstance = new bootstrap.Modal(document.getElementById('rapidFireModal'));
     
     // Decide whether to use cache:
     // - Admin: use cache
@@ -3226,9 +3253,47 @@ function openZoomModal(index, e) {
 function closeZoomModal() {
     zoomModalOpen = false;
     document.getElementById('zoomModal').style.display = 'none';
-    // Reset Rapid checkbox to default (unchecked)
-    const rapidCheckbox = document.getElementById('rapidDeleteCheckbox');
-    if (rapidCheckbox) rapidCheckbox.checked = false;
+    // Reset Rapid Fire checkbox to default (unchecked)
+    const rapidCheckbox = document.getElementById('rapidFireCheckbox');
+    if (rapidCheckbox) {
+        rapidCheckbox.checked = false;
+        updateDeleteButtonText(false);
+    }
+}
+
+function handleRapidFireChange(checkbox) {
+    if (checkbox.checked) {
+        // Show warning modal when enabling
+        checkbox.checked = false; // Uncheck until confirmed
+        rapidFireModalInstance.show();
+    } else {
+        // No confirmation needed when disabling
+        updateDeleteButtonText(false);
+    }
+}
+
+function confirmRapidFire() {
+    rapidFireModalInstance.hide();
+    const checkbox = document.getElementById('rapidFireCheckbox');
+    if (checkbox) {
+        checkbox.checked = true;
+        updateDeleteButtonText(true);
+    }
+}
+
+function cancelRapidFire() {
+    rapidFireModalInstance.hide();
+    const checkbox = document.getElementById('rapidFireCheckbox');
+    if (checkbox) checkbox.checked = false;
+}
+
+function updateDeleteButtonText(rapidMode) {
+    const btn = document.getElementById('zoomDeleteBtn');
+    if (btn) {
+        btn.innerHTML = rapidMode 
+            ? '<i class="bi bi-trash"></i> Rapid Delete' 
+            : '<i class="bi bi-trash"></i> Delete';
+    }
 }
 
 function zoomPrev() {
@@ -3301,11 +3366,9 @@ function updateZoomModal() {
     infoHtml += '</div>';
     infoHtml += '</div>';
     
-    // Rapid checkbox and Delete button on right
-    const rapidChecked = document.getElementById('rapidDeleteCheckbox')?.checked ? 'checked' : '';
+    // Delete button on right
     infoHtml += `<div class="zoom-delete-section">`;
-    infoHtml += `<label class="zoom-rapid-checkbox"><input type="checkbox" id="rapidDeleteCheckbox" ${rapidChecked}> Rapid</label>`;
-    infoHtml += `<button class="zoom-delete-btn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> Delete</button>`;
+    infoHtml += `<button class="zoom-delete-btn" id="zoomDeleteBtn" onclick="zoomDeletePhoto()"><i class="bi bi-trash"></i> Delete</button>`;
     infoHtml += `</div>`;
     
     document.getElementById('zoomInfo').innerHTML = infoHtml;
@@ -3455,7 +3518,9 @@ async function zoomTagPhoto(tagName) {
             // Sync to cache
             updatePhotoCacheAfterTagChange(photo.photoId, newTagIds);
             
-            if (!alreadyHasTag) {
+            // Auto-advance only if Rapid Fire is enabled and tag was added (not removed)
+            const rapidMode = document.getElementById('rapidFireCheckbox')?.checked;
+            if (rapidMode && !alreadyHasTag) {
                 // Flash animation and advance
                 document.getElementById('zoomImage').classList.add('zoom-flash');
                 setTimeout(() => {
@@ -3534,7 +3599,7 @@ async function zoomDeletePhoto() {
     const photo = filteredPhotos[zoomIndex];
     if (!photo) return;
     
-    const rapidMode = document.getElementById('rapidDeleteCheckbox')?.checked;
+    const rapidMode = document.getElementById('rapidFireCheckbox')?.checked;
     if (!rapidMode && !confirm(`Delete this photo permanently?`)) return;
     
     try {
