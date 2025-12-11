@@ -1434,8 +1434,14 @@ async function viewOnlyLogin() {
         }
         
         accessToken = authData.AuthenticationResult.AccessToken;
+        accessLevel = 'viewer';
+        sessionStorage.setItem('hqAccess', accessLevel);
         localStorage.setItem('trailcam_token', accessToken);
         localStorage.setItem('trailcam_email', 'QuickView');
+        
+        // Hide HQ Gate
+        document.getElementById('hqGate').style.display = 'none';
+        applyAccessLevel();
         
         // Step 3: Initialize app (loads from cache)
         await initializeApp();
