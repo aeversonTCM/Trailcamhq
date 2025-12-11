@@ -487,22 +487,20 @@
             color: #fff;
         }
         
-        .zoom-rapid-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .zoom-rapid-label {
             color: var(--text-muted);
             font-size: 13px;
             cursor: pointer;
+            transition: color 0.15s;
         }
         
-        .zoom-rapid-checkbox input {
-            accent-color: var(--accent-red);
-            cursor: pointer;
-        }
-        
-        .zoom-rapid-checkbox:hover {
+        .zoom-rapid-label:hover {
             color: var(--accent-red);
+        }
+        
+        .zoom-rapid-label.active {
+            color: var(--accent-red);
+            font-weight: 500;
         }
         
         .zoom-delete-section {
@@ -1116,10 +1114,10 @@
                 <p>Rapid Fire mode enables quick photo processing:</p>
                 <ul>
                     <li>Auto-advance to next photo after tagging</li>
-                    <li>Immediate delete without confirmation</li>
+                    <li><strong style="color: var(--accent-red);">Immediate delete</strong> without confirmation</li>
                 </ul>
             </div>
-            <div class="modal-footer border-secondary">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="cancelRapidFire()">Cancel</button>
                 <button type="button" class="btn btn-warning" onclick="confirmRapidFire()">OK</button>
             </div>
@@ -1147,7 +1145,7 @@
         <div class="zoom-info" id="zoomInfo"></div>
         <div class="zoom-actions-wrapper">
             <div class="zoom-left-section">
-                <label class="zoom-rapid-checkbox"><input type="checkbox" id="rapidFireCheckbox" onchange="handleRapidFireChange(this)"> Rapid Fire</label>
+                <span class="zoom-rapid-label" id="rapidFireLabel" onclick="handleRapidFireClick()">Rapid Fire</span>
             </div>
             <div class="zoom-actions" id="zoomActions"></div>
             <div class="zoom-right-section">
@@ -3238,6 +3236,7 @@ async function bulkDownload() {
 // ============== QUICK TAG ZOOM MODAL ==============
 let zoomIndex = 0;
 let zoomModalOpen = false;
+let rapidFireEnabled = false;
 
 function openZoomModal(index, e) {
     if (e) e.stopPropagation();
@@ -3252,39 +3251,35 @@ function openZoomModal(index, e) {
 
 function closeZoomModal() {
     zoomModalOpen = false;
+    rapidFireEnabled = false;
     document.getElementById('zoomModal').style.display = 'none';
-    // Reset Rapid Fire checkbox to default (unchecked)
-    const rapidCheckbox = document.getElementById('rapidFireCheckbox');
-    if (rapidCheckbox) {
-        rapidCheckbox.checked = false;
-        updateDeleteButtonText(false);
-    }
+    // Reset Rapid Fire label
+    const label = document.getElementById('rapidFireLabel');
+    if (label) label.classList.remove('active');
+    updateDeleteButtonText(false);
 }
 
-function handleRapidFireChange(checkbox) {
-    if (checkbox.checked) {
-        // Show warning modal when enabling
-        checkbox.checked = false; // Uncheck until confirmed
-        rapidFireModalInstance.show();
-    } else {
-        // No confirmation needed when disabling
+function handleRapidFireClick() {
+    if (rapidFireEnabled) {
+        // Turn off - no confirmation needed
+        rapidFireEnabled = false;
+        document.getElementById('rapidFireLabel').classList.remove('active');
         updateDeleteButtonText(false);
+    } else {
+        // Show warning modal when enabling
+        rapidFireModalInstance.show();
     }
 }
 
 function confirmRapidFire() {
     rapidFireModalInstance.hide();
-    const checkbox = document.getElementById('rapidFireCheckbox');
-    if (checkbox) {
-        checkbox.checked = true;
-        updateDeleteButtonText(true);
-    }
+    rapidFireEnabled = true;
+    document.getElementById('rapidFireLabel').classList.add('active');
+    updateDeleteButtonText(true);
 }
 
 function cancelRapidFire() {
     rapidFireModalInstance.hide();
-    const checkbox = document.getElementById('rapidFireCheckbox');
-    if (checkbox) checkbox.checked = false;
 }
 
 function updateDeleteButtonText(rapidMode) {
@@ -3519,8 +3514,7 @@ async function zoomTagPhoto(tagName) {
             updatePhotoCacheAfterTagChange(photo.photoId, newTagIds);
             
             // Auto-advance only if Rapid Fire is enabled and tag was added (not removed)
-            const rapidMode = document.getElementById('rapidFireCheckbox')?.checked;
-            if (rapidMode && !alreadyHasTag) {
+            if (rapidFireEnabled && !alreadyHasTag) {
                 // Flash animation and advance
                 document.getElementById('zoomImage').classList.add('zoom-flash');
                 setTimeout(() => {
@@ -3599,8 +3593,7 @@ async function zoomDeletePhoto() {
     const photo = filteredPhotos[zoomIndex];
     if (!photo) return;
     
-    const rapidMode = document.getElementById('rapidFireCheckbox')?.checked;
-    if (!rapidMode && !confirm(`Delete this photo permanently?`)) return;
+    if (!rapidFireEnabled && !confirm(`Delete this photo permanently?`)) return;
     
     try {
         const response = await fetch(`${CONFIG.apiBaseUrl}/photos/${photo.photoId}`, {
