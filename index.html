@@ -159,7 +159,7 @@
         .spinner-border { width: 3rem; height: 3rem; }
         
         /* Hide login card during loading */
-        #hqGate.loading .login-card { display: '0.5' !important; }
+        #hqGate.loading .login-card { display: none !important; }
 
         /* Move logo down during loading */
         #hqGate.loading img { margin-top: 35vh !important; }
@@ -1408,7 +1408,7 @@ async function checkHqAccess() {
     document.getElementById('hqError').style.display = 'none';
     
     // Hide HQ Gate immediately and show loading
-    document.getElementById('hqGate').style.display = 'none';
+    document.getElementById('hqGate').style.display = '0.5';
     showLoading('Verifying access...');
     
     try {
